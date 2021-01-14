@@ -3,6 +3,16 @@
   <xacro:arg name="laser_visual" default="false"/>
   <xacro:arg name="imu_visual"   default="false"/>
 
+  <!-- Load from yaml file -->
+  <xacro:property name='myyaml' value='$(find nuturtle_description)/config/diff_params.yaml'/>
+  <xacro:property name='diff_params' value='${load_yaml(myyaml)}'/>
+
+  <!-- wheel radius and separation -->
+  <!-- default WR=0.033 -->
+  <xacro:property name='WR' value='${diff_params["wheel_radius"]}'/>
+  <!-- default WS=0.16 -->
+  <xacro:property name='WS' value='${diff_params["wheel_base"]}'/>
+
   <gazebo reference="base_link">
     <material>Gazebo/DarkGrey</material>
   </gazebo>
@@ -62,8 +72,8 @@
       <updateRate>30</updateRate>
       <leftJoint>wheel_left_joint</leftJoint>
       <rightJoint>wheel_right_joint</rightJoint>
-      <wheelSeparation>0.160</wheelSeparation>
-      <wheelDiameter>0.066</wheelDiameter>
+      <wheelSeparation>${WS}</wheelSeparation>
+      <wheelDiameter>${2*WR}</wheelDiameter>
       <wheelAcceleration>1</wheelAcceleration>
       <wheelTorque>10</wheelTorque>
       <rosDebugLevel>na</rosDebugLevel>

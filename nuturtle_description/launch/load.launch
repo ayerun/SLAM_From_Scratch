@@ -3,6 +3,7 @@
   <arg name="use_rviz" default="true" doc='launches rviz and joint_state_publisher'/>
   <arg name="multi_robot_name" default="" doc='sets tf_prefix if launching multiple robots'/>
 
+  <rosparam file='$(find nuturtle_description)/config/diff_params.yaml' />
   <arg name="urdf_file" default="$(find xacro)/xacro '$(find nuturtle_description)/urdf/turtlebot3_burger.urdf.xacro'" doc='urdf file for robot'/>
   <param name="robot_description" command="$(arg urdf_file)" />
 
