@@ -1,0 +1,7 @@
+<launch>
+    <node name="roaming_turtle" pkg="turtlesim" type="turtlesim_node" />
+    <node name="trutle_rect" pkg="trect" type="trect_turtle_rect"/>
+    <rosparam param="max_xdot">2</rosparam>
+    <rosparam param="max_wdot">1</rosparam>
+    <rosparam param="frequency">100</rosparam>
+</launch>
