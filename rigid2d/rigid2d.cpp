@@ -1,26 +1,24 @@
 #include "rigid2d.hpp"
-#include <cmath>
+// #include <cmath>
 #include <iostream>
 
-constexpr double PI=3.14159265358979323846;
-
-constexpr bool almost_equal(double d1, double d2, double epsilon=1.0e-12)
+namespace rigid2d
 {
-    //true if abs(d1 - d2) < epsilon
-    /// Note: the fabs function in <cmath> (c++ equivalent of math.h) will
-    /// be useful here
+    std::ostream & operator<<(std::ostream & os, const Vector2D & v)
+    {
+        const double x = v.x;
+        const double y = v.y;
 
-    // if (fabs(d1-d2) < epsilon)
-    // {
-    //     return true;
-    // }
-    // else
-    // {
-    //     return false;
-    // }
+        os << "[" << x << " " << y << "]" << std::endl;
 
-    // constexpr bool output=true;
-    return true;
+        return os;
+    }
 }
-
-// almost_equal(0,0);
+int main()
+{
+    rigid2d::Vector2D v;
+    v.x = 4;
+    v.y = 5;
+    std::cout<<v;
+    return 0;
+}

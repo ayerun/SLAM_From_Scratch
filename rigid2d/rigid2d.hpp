@@ -4,6 +4,7 @@
 /// \brief Library for two-dimensional rigid body transformations.
 
 #include<iosfwd> // contains forward definitions for iostream objects
+#include <cmath>
 
 namespace rigid2d
 {
@@ -20,6 +21,15 @@ namespace rigid2d
     /// be useful here
     constexpr bool almost_equal(double d1, double d2, double epsilon=1.0e-12)
     {
+        if (fabs(d1-d2) < epsilon)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+
     }
 
     /// \brief convert degrees to radians
@@ -30,6 +40,7 @@ namespace rigid2d
     /// if given a compile-time constant as input
     constexpr double deg2rad(double deg)
     {
+        return (deg*PI)/180;
     }
 
     /// \brief convert radians to degrees
@@ -37,6 +48,7 @@ namespace rigid2d
     /// \returns the angle in degrees
     constexpr double rad2deg(double rad)
     {
+        return (rad*180)/PI;
     }
 
     /// static_assertions test compile time assumptions.
@@ -45,12 +57,14 @@ namespace rigid2d
     /// just to see what happens
     static_assert(almost_equal(0, 0), "is_zero failed");
     static_assert(almost_equal(0.001, 0.005, 1.0e-2), "is_zero failed");
+    static_assert(almost_equal(0, 3, 4), "is_zero failed");
 
     static_assert(almost_equal(deg2rad(0.0), 0.0), "deg2rad failed");
-
-    static_assert(almost_equal(rad2deg(0.0), 0.0), "rad2deg) failed");
-
+    static_assert(almost_equal(deg2rad(180), PI), "deg2rad failed");
     static_assert(almost_equal(deg2rad(rad2deg(2.1)), 2.1), "deg2rad failed");
+
+    static_assert(almost_equal(rad2deg(0.0), 0.0), "rad2deg failed");
+    static_assert(almost_equal(rad2deg(PI), 180), "rad2deg failed");
 
 
     /// \brief A 2-Dimensional Vector
