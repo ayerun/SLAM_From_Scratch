@@ -2,6 +2,8 @@
 #include <turtlesim/Pose.h>
 #include <geometry_msgs/Twist.h>
 #include <ros/console.h>
+#include <std_srvs/Empty.h>
+#include <turtlesim/TeleportAbsolute.h>
 
 turtlesim::PoseConstPtr tpose;
 int max_xdot;
@@ -22,7 +24,7 @@ void stop(ros::Publisher pub)
 void turn(ros::Publisher pub, ros::Rate r)
 {
     geometry_msgs::Twist turt_twist;
-    turt_twist.angular.z = 3.14159;
+    turt_twist.angular.z = 3.14159/2;
     double begin = ros::Time::now().toSec();
     
     while (ros::Time::now().toSec() < begin+1)
@@ -50,13 +52,17 @@ int main(int argc, char** argv)
    ros::param::get("/max_wdot", max_wdot);
    ros::param::get("/frequency", frequency);
 
+  //  ros::service::waitForService('turtlesim/TeleportAbsolute');
+   ros::ServiceClient tele = nh.serviceClient<turtlesim::TeleportAbsolute>("TeleportAbsolute");
+   ros::ServiceClient reset = nh.serviceClient<std_srvs::Empty>("reset");
+
    ROS_INFO_STREAM(max_xdot);
    ROS_INFO_STREAM(max_wdot);
    ROS_INFO_STREAM(frequency);
 
    ros::Rate r(frequency);
 
-   ros::Duration(3).sleep();
+   ros::Duration(2).sleep();
    turn(pub,r);
 
 //    while(ros::ok())
