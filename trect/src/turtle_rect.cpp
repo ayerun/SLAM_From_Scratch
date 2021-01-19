@@ -4,6 +4,7 @@
 #include <ros/console.h>
 #include <std_srvs/Empty.h>
 #include <turtlesim/TeleportAbsolute.h>
+#include <turtlesim/SetPen.h>
 
 turtlesim::PoseConstPtr tpose;
 int max_xdot;
@@ -52,18 +53,34 @@ int main(int argc, char** argv)
    ros::param::get("/max_wdot", max_wdot);
    ros::param::get("/frequency", frequency);
 
-  //  ros::service::waitForService('turtlesim/TeleportAbsolute');
-   ros::ServiceClient tele = nh.serviceClient<turtlesim::TeleportAbsolute>("TeleportAbsolute");
-   ros::ServiceClient reset = nh.serviceClient<std_srvs::Empty>("reset");
+   ros::ServiceClient teleportClient = nh.serviceClient<turtlesim::TeleportAbsolute>("TeleportAbsolute");
+   teleportClient.waitForExistence();
+   ros::ServiceClient penClient = nh.serviceClient<turtlesim::SetPen>("SetPen");
+   penClient.waitForExistence();
+   ros::ServiceClient clearClient = nh.serviceClient<std_srvs::Empty>("clear");
+   clearClient.waitForExistence();
 
    ROS_INFO_STREAM(max_xdot);
    ROS_INFO_STREAM(max_wdot);
    ROS_INFO_STREAM(frequency);
 
    ros::Rate r(frequency);
-
    ros::Duration(2).sleep();
+
+  //  turtlesim::SetPen::Request pen_req;
+  //  turtlesim::SetPen::Response pen_resp;
+  //  pen_req.off = 1;
+  //  bool success1 = penClient.call(pen_req,pen_resp);
+
+   turtlesim::TeleportAbsolute::Request pos;
+   turtlesim::TeleportAbsolute::Response resp;
+   pos.x = 2;
+   pos.y = 3;
+   bool success2 = teleportClient.call(pos,resp);
    turn(pub,r);
+   
+   std_srvs::Empty empty;
+   clearClient.call(empty);
 
 //    while(ros::ok())
 //    {
