@@ -10,32 +10,36 @@
 enum class State {MOVE, TURN, STOP, STOP2move, STOP2turn};
 static State state = State::STOP;
 
-//change to static
-turtlesim::PoseConstPtr tpose;
-geometry_msgs::Twist twist;
-int max_xdot;
-int max_wdot;
-int frequency;
-bool wh = true;
-float x;
-float y;
-float width;
-float height;
-float w_sleep;
-float h_sleep;
-double t_sleep;
+//global variables
+static turtlesim::PoseConstPtr tpose; //turtle pose
+static geometry_msgs::Twist twist;    //turtle twist command
+static int max_xdot;                  //max velocity
+static int max_wdot;                  //max angular velocity
+static int frequency;                 //loopint frequency
+static int sides = 0;                 //current side of rectangle
+static bool wh = true;                //track width or height
+static float x;                       //x location of rectangle
+static float y;                       //y location of rectangle
+static float width;                   //width of rectangle
+static float height;                  //height of rectangle
 
 
 void poseCallback(const turtlesim::PoseConstPtr &pose)
 {
     tpose = pose;
+    return;
 }
 
 void move(ros::Publisher pub, float dist)
 {
     twist.linear.x = max_xdot;
-    pub.publish(twist);
-    ros::Duration(dist/max_xdot).sleep();
+    ros::Rate r(frequency);
+    double begin = ros::Time::now().toSec();
+    while (ros::Time::now().toSec() < begin+(dist/max_xdot))
+    {
+        pub.publish(twist);
+        r.sleep();
+    }
     state = State::STOP2turn;
     return;
 }
@@ -50,7 +54,6 @@ void turn(ros::Publisher pub)
         pub.publish(twist);
         r.sleep();
     }
-    // ros::Duration(3.14/2/max_wdot).sleep();
     state = State::STOP2move;
     return;
 }
@@ -63,14 +66,6 @@ void stop(ros::Publisher pub)
     return;
 }
 
-float round2(float var) 
-{ 
-    //round to 2 decminal places
-    float value = (int)(var * 100 + .5); 
-    return (float)value / 100; 
-} 
-
-
 bool startCallback(trect::start::Request &req, trect::start::Response &res)
 {
     //intialize services
@@ -79,28 +74,40 @@ bool startCallback(trect::start::Request &req, trect::start::Response &res)
     clearClient.waitForExistence();
     ros::ServiceClient teleportClient = nh.serviceClient<turtlesim::TeleportAbsolute>("TeleportAbsolute");
     teleportClient.waitForExistence();
+    ros::ServiceClient penClient = nh.serviceClient<turtlesim::SetPen>("SetPen");
+    penClient.waitForExistence();
 
+    //looping rate
     ros::Rate r(frequency);
+
+    //track sides of rectangle
+    sides = 0;
 
     //teleport to new position
     turtlesim::TeleportAbsolute::Request tele_req;
     turtlesim::TeleportAbsolute::Response tele_res;
     tele_req.x = req.x;
     tele_req.y = req.y;
-    bool success = teleportClient.call(tele_req,tele_res);
+    teleportClient.call(tele_req,tele_res);
 
     //clear background
     std_srvs::Empty emp;
     clearClient.call(emp);
 
+    //set pen color to pink
+    turtlesim::SetPen::Request pen_req;
+    turtlesim::SetPen::Response pen_resp;
+    pen_req.r = 164;
+    pen_req.g = 50;
+    pen_req.b = 168;
+    pen_req.width = 3;
+    penClient.call(pen_req,pen_resp);
+
+    //set rectangle location and dimensions
     x = req.x;
     y = req.y;
     width = req.width;
     height = req.height;
-    w_sleep = width/max_xdot;
-    h_sleep = height/max_xdot;
-    t_sleep = 0.1;
-    // t_sleep = round2(3.142/max_wdot);
 
     //draw rectangle
     state = State::MOVE;
@@ -126,13 +133,7 @@ int main(int argc, char** argv)
     ROS_INFO_STREAM(frequency);
 
 
-    // //initialize services
-    ros::ServiceClient teleportClient = nh.serviceClient<turtlesim::TeleportAbsolute>("TeleportAbsolute");
-    teleportClient.waitForExistence();
-    // ros::ServiceClient penClient = nh.serviceClient<turtlesim::SetPen>("SetPen");
-    // penClient.waitForExistence();
-    ros::ServiceClient clearClient = nh.serviceClient<std_srvs::Empty>("clear");
-    clearClient.waitForExistence();
+    //initialize start service
     ros::ServiceServer service = nh.advertiseService("start", startCallback);
 
     ros::Rate r(frequency);
@@ -143,20 +144,24 @@ int main(int argc, char** argv)
         switch(state)
         {   
             case State::MOVE:
-                ROS_ERROR_STREAM("MOVIN");
-                if(wh)
+                if (sides > 3)
+                {
+                    state == State::STOP;
+                }
+                else if(wh)
                 {
                     move(pub,width);
                     wh = false;
+                    sides++;
                 }
                 else
                 {
                     move(pub,height);
                     wh = true;
+                    sides++;
                 }
                 break;
             case State::TURN:
-                ROS_ERROR_STREAM("TURNIN");
                 turn(pub);
                 break;
             case State::STOP2move:
@@ -177,20 +182,5 @@ int main(int argc, char** argv)
         r.sleep();
     }
 
-    //test pen
-  //  turtlesim::SetPen::Request pen_req;
-  //  turtlesim::SetPen::Response pen_resp;
-  //  pen_req.off = 1;
-  //  bool success1 = penClient.call(pen_req,pen_resp);
-
-    //test teleport
-    // turtlesim::TeleportAbsolute::Request pos;
-    // turtlesim::TeleportAbsolute::Response resp;
-    // pos.x = 2;
-    // pos.y = 3;
-    // bool success2 = teleportClient.call(pos,resp);
-    // turn(pub);
-    // go(pub,1);
-
-
+    return 0;
 }
