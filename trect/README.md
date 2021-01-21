@@ -1,5 +1,5 @@
 # Turtle Rect
-* A Pacakge that commands turtles in turtlesim to draw rectangles at user defined locations with user defined dimensions.
+* A Package that commands turtles in turtlesim to draw rectangles at user defined locations with user defined dimensions.
 
 # Example Usage
 ```
