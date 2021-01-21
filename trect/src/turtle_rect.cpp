@@ -1,3 +1,7 @@
+/// \file
+/// \brief Node that commands turtles in turtlesim to draw rectangles 
+///        at user defined locations with user defined dimensions.
+
 #include <ros/ros.h>
 #include <turtlesim/Pose.h>
 #include <geometry_msgs/Twist.h>
@@ -18,19 +22,25 @@ static int max_wdot;                  //max angular velocity
 static int frequency;                 //loopint frequency
 static int sides = 0;                 //current side of rectangle
 static bool wh = true;                //track width or height
-static float x;                       //x location of rectangle
-static float y;                       //y location of rectangle
 static float width;                   //width of rectangle
 static float height;                  //height of rectangle
+ros::ServiceClient clearClient;       //turtlesim clear service
+ros::ServiceClient teleportClient;    //turtlesim teleport absolute service
+ros::ServiceClient penClient;         //turtlesim set pen service
+ros::Subscriber pose_sub;             //pose subscriber
+ros::Publisher pub;                   //publisher to /cmd_vel
 
-
+/// \brief subscriber callback that updates turtle pose
+/// \param pose - pose of turtle
 void poseCallback(const turtlesim::PoseConstPtr &pose)
 {
-    tpose = pose;
+    tpose = pose;   //tpose is pointer to pose
     return;
 }
 
-void move(ros::Publisher pub, float dist)
+/// \brief commands the turtle to move a certain distance
+/// \param dist - distance to move
+void move(float dist)
 {
     twist.linear.x = max_xdot;
     ros::Rate r(frequency);
@@ -44,7 +54,8 @@ void move(ros::Publisher pub, float dist)
     return;
 }
 
-void turn(ros::Publisher pub)
+/// \brief commands the turtle to rotate 90 degrees
+void turn()
 {
     twist.angular.z = max_wdot;
     ros::Rate r(frequency);
@@ -58,7 +69,8 @@ void turn(ros::Publisher pub)
     return;
 }
 
-void stop(ros::Publisher pub)
+/// \brief commands the turtle to stop moving and rotating
+void stop()
 {
     twist.angular.z = 0;
     twist.linear.x = 0;
@@ -66,17 +78,17 @@ void stop(ros::Publisher pub)
     return;
 }
 
+/// \brief start service callback, teleports turtle, clears background,
+///        and commands turtle to draw rectangle
+/// \param req - service request
+///              x: x coordinate for teleportation
+///              y: y coordinate for teleportation
+///              width: width of rectangle
+///              height: height of rectangle
+/// \param resp - service response (empty)
+/// \return true when callback complete
 bool startCallback(trect::start::Request &req, trect::start::Response &res)
 {
-    //intialize services
-    ros::NodeHandle nh;
-    ros::ServiceClient clearClient = nh.serviceClient<std_srvs::Empty>("clear");
-    clearClient.waitForExistence();
-    ros::ServiceClient teleportClient = nh.serviceClient<turtlesim::TeleportAbsolute>("TeleportAbsolute");
-    teleportClient.waitForExistence();
-    ros::ServiceClient penClient = nh.serviceClient<turtlesim::SetPen>("SetPen");
-    penClient.waitForExistence();
-
     //looping rate
     ros::Rate r(frequency);
 
@@ -103,9 +115,7 @@ bool startCallback(trect::start::Request &req, trect::start::Response &res)
     pen_req.width = 3;
     penClient.call(pen_req,pen_resp);
 
-    //set rectangle location and dimensions
-    x = req.x;
-    y = req.y;
+    //set rectangle dimensions
     width = req.width;
     height = req.height;
 
@@ -114,6 +124,10 @@ bool startCallback(trect::start::Request &req, trect::start::Response &res)
     return true;
 }
 
+/// \brief initializes node, subscriber, publisher, services, and parameters
+/// \param argc - initialization arguement
+/// \param argv - initialization arguement
+/// \return 0 at end of function (should never reach end of function)
 int main(int argc, char** argv)
 {
     //start node
@@ -121,8 +135,16 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
 
     //initialize subscriber and publisher
-    ros::Subscriber pose_sub = nh.subscribe("turtle1/pose", 1, poseCallback);
-    ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("turtle1/cmd_vel", 1);
+    pose_sub = nh.subscribe("turtle1/pose", 1, poseCallback);
+    pub = nh.advertise<geometry_msgs::Twist>("turtle1/cmd_vel", 1);
+
+    //initialize services
+    clearClient = nh.serviceClient<std_srvs::Empty>("clear");
+    clearClient.waitForExistence();
+    teleportClient = nh.serviceClient<turtlesim::TeleportAbsolute>("TeleportAbsolute");
+    teleportClient.waitForExistence();
+    penClient = nh.serviceClient<turtlesim::SetPen>("SetPen");
+    penClient.waitForExistence();
 
     //get parameters
     ros::param::get("/max_xdot", max_xdot);
@@ -136,8 +158,8 @@ int main(int argc, char** argv)
     //initialize start service
     ros::ServiceServer service = nh.advertiseService("start", startCallback);
 
-    ros::Rate r(frequency);
-    ros::Duration(2).sleep();
+    ros::Rate r(frequency);     //looping rate
+    ros::Duration(2).sleep();   //give 2 seconds for everything to initialize
 
     while(ros::ok())
     {
@@ -150,30 +172,30 @@ int main(int argc, char** argv)
                 }
                 else if(wh)
                 {
-                    move(pub,width);
+                    move(width);
                     wh = false;
                     sides++;
                 }
                 else
                 {
-                    move(pub,height);
+                    move(height);
                     wh = true;
                     sides++;
                 }
                 break;
             case State::TURN:
-                turn(pub);
+                turn();
                 break;
             case State::STOP2move:
-                stop(pub);
+                stop();
                 state = State::MOVE;
                 break;
             case State::STOP2turn:
-                stop(pub);
+                stop();
                 state = State::TURN;
                 break;
             case State::STOP:
-                stop(pub);
+                stop();
                 break;
             default:
                 throw std::logic_error("Invalid State");

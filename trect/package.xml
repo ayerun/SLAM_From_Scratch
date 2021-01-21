@@ -2,7 +2,7 @@
 <package format="2">
   <name>trect</name>
   <version>1.0.0</version>
-  <description>The trect package</description>
+  <description>commands turtles in turtlesim to draw rectangles at user defined locations with user defined dimensions</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
