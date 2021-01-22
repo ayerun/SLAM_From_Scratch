@@ -1,0 +1,10 @@
+<launch>
+    <node name="roaming_turtle" pkg="turtlesim" type="turtlesim_node" />
+    <node name="turtle_rect" pkg="trect" type="trect_turtle_rect">
+        <remap from="TeleportAbsolute" to="turtle1/teleport_absolute" />
+        <remap from="SetPen" to="turtle1/set_pen" />
+    </node>
+    <rosparam param="max_xdot">2</rosparam>
+    <rosparam param="max_wdot">1</rosparam>
+    <rosparam param="frequency">100</rosparam>
+</launch>
