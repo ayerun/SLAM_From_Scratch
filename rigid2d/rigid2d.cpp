@@ -1,5 +1,5 @@
 #include "rigid2d.hpp"
-// #include <cmath>
+#include <cmath>
 #include <iostream>
 
 namespace rigid2d
@@ -37,22 +37,118 @@ namespace rigid2d
 
     Transform2D::Transform2D()
     {
-        
+        x = 0;
+        y = 0;
+        th = 0;
+        sinth = 0;
+        costh = 1;
+    }
+
+    Transform2D::Transform2D(const Vector2D & trans)
+    {
+        x = trans.x;
+        y = trans.y;
+        th = 0;
+        sinth = 0;
+        costh = 1;
+    }
+
+    Transform2D::Transform2D(double radians)
+    {
+        x = 0;
+        y = 0;
+        th = radians;
+        sinth = sin(radians);
+        costh = cos(radians);
+    }
+
+    Transform2D::Transform2D(const Vector2D & trans, double radians)
+    {
+        x = trans.x;
+        y = trans.y;
+        th = radians;
+        sinth = sin(radians);
+        costh = cos(radians);
+    }
+
+    Vector2D Transform2D::operator()(Vector2D v) const
+    {
+        Vector2D tVec;
+
+        //translate
+        tVec.x = x+v.x;
+        tVec.y = y+v.y;
+
+        //rotate
+        tVec.x = costh*tVec.x-sinth*tVec.y;
+        tVec.y = sinth*tVec.x+costh*tVec.y;
+
+        return tVec;
+    }
+
+    std::ostream & operator<<(std::ostream & os, const Transform2D & tf)
+    {
+        const double x = tf.x;
+        const double y = tf.y;
+        const double th = tf.th;
+        const double sinth = tf.sinth;
+        const double costh = tf.costh;
+
+        os << "delta x = " << x << std::endl;
+        os << "delta y = " << y << std::endl;
+        os << "delta theta = " << th << std::endl;
+        os << "sin(delta theta) = " << sinth << std::endl;
+        os << "cos(delta theta) = " << costh << std::endl;
+
+        return os;
     }
 }
-//
+
 int main()
 {
+    using namespace rigid2d;
+    using namespace std;
+
     //test <<
-    rigid2d::Vector2D v;
-    v.x = 4;
-    v.y = 5;
-    std::cout<<v<<std::endl;
+    // Vector2D v;
+    // v.x = 4;
+    // v.y = 5;
+    // cout<<v<<endl;
 
     //test >>
-    rigid2d::Vector2D myVec;
-    std::cin>>myVec;
-    std::cout<<myVec;
+    // Vector2D myVec;
+    // cin>>myVec;
+    // cout<<myVec;
+
+    //test identity
+    // Transform2D myTrans = Transform2D();
+    // cout<<myTrans;
+
+    //test translation
+    // Vector2D v2;
+    // v2.x = 4;
+    // v2.y = 5;
+    // Transform2D myTrans2 = Transform2D(v2);
+    // cout<<myTrans;
+
+    //test rotation
+    // Transform2D myTrans3 = Transform2D(3.14159);
+    // cout<<myTrans3;
+
+    //test translation and rotation
+    Vector2D v3;
+    v3.x = 1;
+    v3.y = 2;
+    Transform2D myTrans4 = Transform2D(v3,0);
+    // cout<<myTrans4;
+
+    //test ()
+    //Transform2D(Vector2D) = Vector2D
+    Vector2D v4;
+    v4.x = 1;
+    v4.y = 1;
+    auto output = myTrans4(v4);
+    cout<<output;
 
 
     return 0;
