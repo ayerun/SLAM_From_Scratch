@@ -71,17 +71,12 @@ namespace rigid2d
         costh = cos(radians);
     }
 
-    Vector2D Transform2D::operator()(Vector2D v) const
+    Vector2D Transform2D::operator()(Vector2D v) const  
     {
         Vector2D tVec;
 
-        //translate
-        tVec.x = x+v.x;
-        tVec.y = y+v.y;
-
-        //rotate
-        tVec.x = costh*tVec.x-sinth*tVec.y;
-        tVec.y = sinth*tVec.x+costh*tVec.y;
+        tVec.x = v.x*costh-v.y*sinth+x;
+        tVec.y = v.x*sinth+v.y*costh+y;
 
         return tVec;
     }
@@ -102,6 +97,37 @@ namespace rigid2d
 
         return os;
     }
+
+    // std::istream & operator>>(std::istream & is, Transform2D & tf)
+    // {
+    //     is >> tf.th;
+    //     while(is.fail())
+    //     {
+    //         is.clear();
+    //         is.ignore(1);
+    //         is >> tf.th;
+    //     }
+    //     tf.costh = cos(tf.th);
+    //     tf.sinth = sin(tf.th);
+        
+    //     is >> tf.x;
+    //     while(is.fail())
+    //     {
+    //         is.clear();
+    //         is.ignore(1);
+    //         is >> tf.x;
+    //     }
+
+    //     is >> tf.y;
+    //     while(is.fail())
+    //     {
+    //         is.clear();
+    //         is.ignore(1);
+    //         is >> tf.y;
+    //     }
+        
+    //     return is;
+    // }
 }
 
 int main()
@@ -138,15 +164,15 @@ int main()
     //test translation and rotation
     Vector2D v3;
     v3.x = 1;
-    v3.y = 2;
-    Transform2D myTrans4 = Transform2D(v3,0);
+    v3.y = 0;
+    Transform2D myTrans4 = Transform2D(v3,3.14159);
     // cout<<myTrans4;
 
     //test ()
     //Transform2D(Vector2D) = Vector2D
     Vector2D v4;
     v4.x = 1;
-    v4.y = 1;
+    v4.y = 0;
     auto output = myTrans4(v4);
     cout<<output;
 
