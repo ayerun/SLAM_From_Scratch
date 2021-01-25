@@ -81,6 +81,21 @@ namespace rigid2d
         return tVec;
     }
 
+    Transform2D Transform2D::inv() const
+    {
+        Transform2D inverse;
+        Vector2D trans;
+        double rad;
+        rad = 2*PI-th;
+
+        trans.x = -x;
+        trans.y = -y;
+
+        inverse = Transform2D(trans,rad);
+
+        return inverse;
+    }
+
     std::ostream & operator<<(std::ostream & os, const Transform2D & tf)
     {
         const double x = tf.x;
@@ -97,6 +112,8 @@ namespace rigid2d
 
         return os;
     }
+
+
 
     // std::istream & operator>>(std::istream & is, Transform2D & tf)
     // {
@@ -163,18 +180,27 @@ int main()
 
     //test translation and rotation
     Vector2D v3;
-    v3.x = 1;
+    v3.x = 0;
     v3.y = 0;
-    Transform2D myTrans4 = Transform2D(v3,3.14159);
+    Transform2D myTrans4 = Transform2D(v3,2);
     // cout<<myTrans4;
 
     //test ()
     //Transform2D(Vector2D) = Vector2D
-    Vector2D v4;
-    v4.x = 1;
-    v4.y = 0;
-    auto output = myTrans4(v4);
-    cout<<output;
+    // Vector2D v4;
+    // v4.x = 1;
+    // v4.y = 0;
+    // auto output = myTrans4(v4);
+    // cout<<output;
+
+    // test inv()
+    Transform2D inverse;
+    cout<<myTrans4<<endl;
+    inverse = myTrans4.inv();
+    cout<<inverse<<endl;
+    inverse = inverse.inv();
+    cout<<inverse<<endl;
+
 
 
     return 0;
