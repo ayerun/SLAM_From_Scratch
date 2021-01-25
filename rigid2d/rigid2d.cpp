@@ -88,12 +88,23 @@ namespace rigid2d
         double rad;
         rad = 2*PI-th;
 
-        trans.x = -x;
-        trans.y = -y;
+        trans.x = -y*sinth-x*costh;
+        trans.y = -y*costh+x*sinth;
 
         inverse = Transform2D(trans,rad);
 
         return inverse;
+    }
+
+    Transform2D & Transform2D::operator*=(const Transform2D & rhs)
+    {
+        th = th + rhs.th;
+        x = rhs.x*costh-rhs.y*sinth+x;
+        y = rhs.x*sinth+rhs.y*costh+y;
+        costh = cos(th);
+        sinth = sin(th);
+
+        return *this;
     }
 
     std::ostream & operator<<(std::ostream & os, const Transform2D & tf)
@@ -113,44 +124,52 @@ namespace rigid2d
         return os;
     }
 
+    Transform2D operator*(Transform2D lhs, const Transform2D & rhs)
+    {
+        lhs*=rhs;
+        return lhs;
+    }
 
-
-    // std::istream & operator>>(std::istream & is, Transform2D & tf)
-    // {
-    //     is >> tf.th;
-    //     while(is.fail())
-    //     {
-    //         is.clear();
-    //         is.ignore(1);
-    //         is >> tf.th;
-    //     }
-    //     tf.costh = cos(tf.th);
-    //     tf.sinth = sin(tf.th);
+    std::istream & operator>>(std::istream & is, Transform2D & tf)
+    {
+        double theta;
         
-    //     is >> tf.x;
-    //     while(is.fail())
-    //     {
-    //         is.clear();
-    //         is.ignore(1);
-    //         is >> tf.x;
-    //     }
+        Vector2D vec;
 
-    //     is >> tf.y;
-    //     while(is.fail())
-    //     {
-    //         is.clear();
-    //         is.ignore(1);
-    //         is >> tf.y;
-    //     }
+        is >> theta;
+        while(is.fail())
+        {
+            is.clear();
+            is.ignore(1);
+            is >> theta;
+        }
         
-    //     return is;
-    // }
+        is >> vec.x;
+        while(is.fail())
+        {
+            is.clear();
+            is.ignore(1);
+            is >> vec.x;
+        }
+
+        is >> vec.y;
+        while(is.fail())
+        {
+            is.clear();
+            is.ignore(1);
+            is >> vec.y;
+        }
+
+        tf = Transform2D(vec, theta);
+        
+        return is;
+    }
 }
 
-int main()
-{
-    using namespace rigid2d;
-    using namespace std;
+// int main()
+// {
+//     using namespace rigid2d;
+//     using namespace std;
 
     //test <<
     // Vector2D v;
@@ -179,10 +198,10 @@ int main()
     // cout<<myTrans3;
 
     //test translation and rotation
-    Vector2D v3;
-    v3.x = 0;
-    v3.y = 0;
-    Transform2D myTrans4 = Transform2D(v3,2);
+    // Vector2D v3;
+    // v3.x = 0;
+    // v3.y = 0;
+    // Transform2D myTrans4 = Transform2D(v3,2);
     // cout<<myTrans4;
 
     //test ()
@@ -194,14 +213,31 @@ int main()
     // cout<<output;
 
     // test inv()
-    Transform2D inverse;
-    cout<<myTrans4<<endl;
-    inverse = myTrans4.inv();
-    cout<<inverse<<endl;
-    inverse = inverse.inv();
-    cout<<inverse<<endl;
+    // Transform2D inverse;
+    // cout<<myTrans4<<endl;
+    // inverse = myTrans4.inv();
+    // cout<<inverse<<endl;
+    // inverse = inverse.inv();
+    // cout<<inverse<<endl;
+
+    // test *=
+    // Vector2D v5;
+    // v5.x = 1;
+    // v5.y = 1;
+    // Transform2D Tab = Transform2D(v5,0);
+    // Transform2D Tbc = Transform2D(v5,PI/2);
+    // Transform2D Tac;
+    // Tac = Tab*Tbc;
+    // Tab*=Tbc;
+    // cout << Tab;
+    // cout << Tac;
+
+    // test isteam
+    // Transform2D myTrans5;
+    // cin>>myTrans5;
+    // cout<<myTrans5;
 
 
 
-    return 0;
-}
+//     return 0;
+// }
