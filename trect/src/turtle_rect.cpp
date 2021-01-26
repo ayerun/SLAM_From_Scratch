@@ -1,6 +1,9 @@
 /// \file
 /// \brief Node that commands turtles in turtlesim to draw rectangles 
 ///        at user defined locations with user defined dimensions.
+///        Subscribers: turtle1/pose
+///        Publishers: pub - turtle1/cmd_vel
+///        Services: start - inputs x, y, width, height and commands turtle to draw a rectangle at (x,y) with dimensions "width" and "height"
 
 #include <ros/ros.h>
 #include <turtlesim/Pose.h>

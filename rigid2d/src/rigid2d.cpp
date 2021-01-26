@@ -26,6 +26,7 @@ namespace rigid2d
         return os;
     }
 
+    //created this function with Nathaniel Nyberg and Sarah Ziselman
     std::istream & operator>>(std::istream & is, Vector2D & v)
     {
         is >> v.x;

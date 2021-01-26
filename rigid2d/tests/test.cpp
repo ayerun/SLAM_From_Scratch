@@ -1,5 +1,5 @@
 #define CATCH_CONFIG_MAIN
-#include "catch.hpp"
+#include "../include/rigid2d/catch.hpp"
 #include "../include/rigid2d/rigid2d.hpp"
 #include <cmath>
 #include <iostream>
@@ -119,7 +119,6 @@ TEST_CASE("Outpt a Transform to ostream","[ouput]"){ // Nathaniel, Nyberg
     REQUIRE(almost_equal(test,0));
 }
 
-/// \brief testing Vector2D operator()(Vector2D v) const
 TEST_CASE("Transformation applied to Vector2D", "[transform]") // Lin, Liu 
 {
     using namespace rigid2d; 
