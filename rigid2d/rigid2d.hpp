@@ -72,6 +72,10 @@ namespace rigid2d
     {
         double x = 0.0;
         double y = 0.0;
+        
+        /// \brief normalize 2D vector
+        /// \return normalized vector
+        Vector2D normalize() const;
     };
 
     /// \brief output a 2 dimensional vector as [xcomponent ycomponent]
@@ -88,6 +92,25 @@ namespace rigid2d
     /// https://en.cppreference.com/w/cpp/io/basic_istream/peek
     /// https://en.cppreference.com/w/cpp/io/basic_istream/get
     std::istream & operator>>(std::istream & is, Vector2D & v);
+
+    struct Twist2D
+    {
+        double w;       //angular velocity
+        double x_dot;   //linear x velocity
+        double y_dot;   //linear y velocity
+    };
+
+    /// \brief output a 2 dimensional twist as [xcomponent ycomponent]
+    /// os - stream to output to
+    /// t - the twist to print
+    std::ostream & operator<<(std::ostream & os, const Twist2D & t);
+
+    /// \brief input a 2 dimensional twist
+    ///   You should be able to read vectors entered as two numbers
+    ///   separated by a newline or a space, or entered as [xcomponent, ycomponent]
+    /// is - stream from which to read
+    /// t [out] - output twist
+    std::istream & operator>>(std::istream & is, Twist2D & v);
 
     /// \brief a rigid body transformation in 2 dimensions
     class Transform2D
@@ -114,6 +137,11 @@ namespace rigid2d
         /// \param v - the vector to transform
         /// \return a vector in the new coordinate system
         Vector2D operator()(Vector2D v) const;
+
+        /// \brief convert a twist to a different reference frame
+        /// \param t - the vector to transform
+        /// \return a twist in the new coordinate system
+        Twist2D operator()(Twist2D t) const;
 
         /// \brief invert the transformation
         /// \return the inverse transformation. 
@@ -156,6 +184,7 @@ namespace rigid2d
     /// \return the composition of the two transforms
     /// HINT: This function should be implemented in terms of *=
     Transform2D operator*(Transform2D lhs, const Transform2D & rhs);
+
 }
 
 #endif

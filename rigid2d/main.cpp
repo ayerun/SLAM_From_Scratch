@@ -16,7 +16,16 @@ int main()
     Vector2D va;
     Vector2D vb;
     Vector2D vc;
+    Twist2D t;
+    Twist2D ta;
+    Twist2D tb;
+    Twist2D tc;
     char sys;
+
+    //my tests
+    Twist2D myt;
+    cin >> myt;
+    cout << myt << endl;
 
     //get transformations
     cout << "Enter a Transformation (Tab): ";
@@ -77,7 +86,36 @@ int main()
     cout << "vb: " << vb << endl;
     cout << "vc: " << vc << endl;
 
+    //get twist and coordinate system
+    cout << "Enter a Twist (t): ";
+    cin >> t;
+    cout << t << endl;
+    cout << "Enter a coordinate system (a, b, or c): ";
+    cin >> sys;
 
+    //compute transformations
+    if (sys == 'a')
+    {
+        ta = t;
+        tb = Tba(ta);
+        tc = Tca(ta);
+    }
+    else if (sys == 'b')
+    {
+        tb = t;
+        ta = Tab(tb);
+        tc = Tcb(tb);
+    }
+    else if (sys == 'c')
+    {
+        tc = t;
+        ta = Tac(tc);
+        tb = Tbc(tc);
+    }
 
-    // cout << v;
+    //output results
+    cout << "ta: " << ta << endl;
+    cout << "tb: " << tb << endl;
+    cout << "tc: " << tc << endl;
+
 }

@@ -4,6 +4,18 @@
 
 namespace rigid2d
 {
+    Vector2D Vector2D::normalize() const
+    {
+        Vector2D norm_v;
+        double len;
+
+        len = sqrt(pow(x,2)+pow(y,2));
+        norm_v.x = x/len;
+        norm_v.y = y/len;
+
+        return norm_v;
+    }
+
     std::ostream & operator<<(std::ostream & os, const Vector2D & v)
     {
         const double x = v.x;
@@ -79,6 +91,17 @@ namespace rigid2d
         tVec.y = v.x*sinth+v.y*costh+y;
 
         return tVec;
+    }
+
+    Twist2D Transform2D::operator()(Twist2D t) const
+    {
+        Twist2D t2;
+
+        t2.w = t.w;
+        t2.x_dot = y*t.w+costh*t.x_dot-sinth*t.y_dot;
+        t2.y_dot = -x*t.w+sinth*t.x_dot+costh*t.y_dot;
+
+        return t2;
     }
 
     Transform2D Transform2D::inv() const
@@ -164,80 +187,44 @@ namespace rigid2d
         
         return is;
     }
+
+    std::ostream & operator<<(std::ostream & os, const Twist2D & t)
+    {
+        const double w = t.w;
+        const double x_dot = t.x_dot;
+        const double y_dot = t.y_dot;
+
+        os << "[" << w << " " << x_dot << " " << y_dot << "]" << std::endl;
+
+        return os;
+    }
+
+    std::istream & operator>>(std::istream & is, Twist2D & t)
+    {
+        is >> t.w;
+        while(is.fail())
+        {
+            is.clear();
+            is.ignore(1);
+            is >> t.w;
+        }
+        
+        is >> t.x_dot;
+        while(is.fail())
+        {
+            is.clear();
+            is.ignore(1);
+            is >> t.x_dot;
+        }
+
+        is >> t.y_dot;
+        while(is.fail())
+        {
+            is.clear();
+            is.ignore(1);
+            is >> t.y_dot;
+        }
+        
+        return is;
+    }
 }
-
-// int main()
-// {
-//     using namespace rigid2d;
-//     using namespace std;
-
-    //test <<
-    // Vector2D v;
-    // v.x = 4;
-    // v.y = 5;
-    // cout<<v<<endl;
-
-    //test >>
-    // Vector2D myVec;
-    // cin>>myVec;
-    // cout<<myVec;
-
-    //test identity
-    // Transform2D myTrans = Transform2D();
-    // cout<<myTrans;
-
-    //test translation
-    // Vector2D v2;
-    // v2.x = 4;
-    // v2.y = 5;
-    // Transform2D myTrans2 = Transform2D(v2);
-    // cout<<myTrans;
-
-    //test rotation
-    // Transform2D myTrans3 = Transform2D(3.14159);
-    // cout<<myTrans3;
-
-    //test translation and rotation
-    // Vector2D v3;
-    // v3.x = 0;
-    // v3.y = 0;
-    // Transform2D myTrans4 = Transform2D(v3,2);
-    // cout<<myTrans4;
-
-    //test ()
-    //Transform2D(Vector2D) = Vector2D
-    // Vector2D v4;
-    // v4.x = 1;
-    // v4.y = 0;
-    // auto output = myTrans4(v4);
-    // cout<<output;
-
-    // test inv()
-    // Transform2D inverse;
-    // cout<<myTrans4<<endl;
-    // inverse = myTrans4.inv();
-    // cout<<inverse<<endl;
-    // inverse = inverse.inv();
-    // cout<<inverse<<endl;
-
-    // test *=
-    // Vector2D v5;
-    // v5.x = 1;
-    // v5.y = 1;
-    // Transform2D Tab = Transform2D(v5,0);
-    // Transform2D Tbc = Transform2D(v5,PI/2);
-    // Transform2D Tac;
-    // Tac = Tab*Tbc;
-    // Tab*=Tbc;
-    // cout << Tab;
-    // cout << Tac;
-
-    // test isteam
-    // Transform2D myTrans5;
-    // cin>>myTrans5;
-    // cout<<myTrans5;
-
-
-
-//     return 0;
-// }
