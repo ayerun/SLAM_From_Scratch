@@ -1,10 +1,16 @@
 /// \file
 /// \brief Node that commands turtles in turtlesim to draw rectangles 
-///        at user defined locations with user defined dimensions.
-///        Subscribers: turtle1/pose
-///        Publishers: pub - turtle1/cmd_vel
-///        Services: start - inputs x, y, width, height and commands turtle to draw a rectangle at (x,y) with dimensions "width" and "height"
-
+///
+/// PARAMETERS:
+///     max_xdot (int): max x velocity
+///     max_wdot (int): max angular velocity
+///     frequency (int): publishing frequency
+/// PUBLISHES:
+///     turtle1/cmd_vel (geometry_msgs/Twist): turtle controller
+/// SUBSCRIBES:
+///     /turtle1/pose (turtlesim/Pose): turtle location and orientation
+/// SERVICES:
+///     start (start): inputs x, y, width, height and commands turtle to draw a rectangle at (x,y) with dimensions "width" and "height"
 #include <ros/ros.h>
 #include <turtlesim/Pose.h>
 #include <geometry_msgs/Twist.h>
@@ -20,8 +26,8 @@ static State state = State::STOP;
 //global variables
 static turtlesim::PoseConstPtr tpose; //turtle pose
 static geometry_msgs::Twist twist;    //turtle twist command
-static int max_xdot;                  //max velocity
-static int max_wdot;                  //max angular velocity
+static double max_xdot;                  //max velocity
+static double max_wdot;                  //max angular velocity
 static int frequency;                 //loopint frequency
 static int sides = 0;                 //current side of rectangle
 static bool wh = true;                //track width or height
