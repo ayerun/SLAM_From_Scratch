@@ -93,6 +93,7 @@ namespace rigid2d
     /// https://en.cppreference.com/w/cpp/io/basic_istream/get
     std::istream & operator>>(std::istream & is, Vector2D & v);
 
+    /// \brief A 2-Dimensional Twist
     struct Twist2D
     {
         double w;       //angular velocity
@@ -156,6 +157,22 @@ namespace rigid2d
         /// \brief \see operator<<(...) (declared outside this class)
         /// for a description
         friend std::ostream & operator<<(std::ostream & os, const Transform2D & tf);
+
+        /// \brief accessor function for private members: used for testing
+        /// \return x
+        double getX() const;
+
+        /// \brief accessor function for private members: used for testing
+        /// \return y
+        double getY() const;
+
+        /// \brief accessor function for private members: used for testing
+        /// \return costh
+        double getCtheta() const;
+
+        /// \brief accessor function for private members: used for testing
+        /// \return sinth
+        double getStheta() const;
     
     private:
         double x;

@@ -130,6 +130,26 @@ namespace rigid2d
         return *this;
     }
 
+    double Transform2D::getX() const
+    {
+        return x;
+    }
+
+    double Transform2D::getY() const
+    {
+        return y;
+    }
+
+    double Transform2D::getCtheta() const
+    {
+        return costh;
+    }
+
+    double Transform2D::getStheta() const
+    {
+        return sinth;
+    }
+
     std::ostream & operator<<(std::ostream & os, const Transform2D & tf)
     {
         const double x = tf.x;
@@ -160,11 +180,13 @@ namespace rigid2d
         Vector2D vec;
 
         is >> theta;
+        theta = deg2rad(theta);
         while(is.fail())
         {
             is.clear();
             is.ignore(1);
             is >> theta;
+            theta = deg2rad(theta);
         }
         
         is >> vec.x;

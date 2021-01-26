@@ -22,11 +22,6 @@ int main()
     Twist2D tc;
     char sys;
 
-    //my tests
-    Twist2D myt;
-    cin >> myt;
-    cout << myt << endl;
-
     //get transformations
     cout << "Enter a Transformation (Tab): ";
     cin >> Tab;
