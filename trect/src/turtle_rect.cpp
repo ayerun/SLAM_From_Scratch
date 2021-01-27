@@ -33,11 +33,11 @@ static int sides = 0;                 //current side of rectangle
 static bool wh = true;                //track width or height
 static float width;                   //width of rectangle
 static float height;                  //height of rectangle
-ros::ServiceClient clearClient;       //turtlesim clear service
-ros::ServiceClient teleportClient;    //turtlesim teleport absolute service
-ros::ServiceClient penClient;         //turtlesim set pen service
-ros::Subscriber pose_sub;             //pose subscriber
-ros::Publisher pub;                   //publisher to /cmd_vel
+static ros::ServiceClient clearClient;       //turtlesim clear service
+static ros::ServiceClient teleportClient;    //turtlesim teleport absolute service
+static ros::ServiceClient penClient;         //turtlesim set pen service
+static ros::Subscriber pose_sub;             //pose subscriber
+static ros::Publisher pub;                   //publisher to /cmd_vel
 
 /// \brief subscriber callback that updates turtle pose
 /// \param pose - pose of turtle
