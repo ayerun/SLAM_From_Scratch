@@ -72,10 +72,33 @@ namespace rigid2d
     {
         double x = 0.0;
         double y = 0.0;
+
+        /// \brief Create an 0 magnitude vector
+        Vector2D();
+
+        /// \brief Create a vector with specified components
+        /// \param x_in - x component
+        /// \param y_in - y component
+        Vector2D(double x_in, double y_in);
         
         /// \brief normalize 2D vector
         /// \return normalized vector
         Vector2D normalize() const;
+
+        /// \brief scalar multiplication of a vector
+        /// \param rhs - scalar
+        /// \returns a reference to the newly scaled vector
+        Vector2D & operator*=(const double & rhs);
+
+        /// \brief vector subtraction
+        /// \param rhs - vector to subtract
+        /// \returns a reference to the difference between vectors
+        Vector2D & operator-=(const Vector2D & rhs);
+
+        /// \brief vector addition
+        /// \param rhs - vector to add
+        /// \returns a reference to the sum of vectors
+        Vector2D & operator+=(const Vector2D & rhs);
     };
 
     /// \brief output a 2 dimensional vector as [xcomponent ycomponent]
@@ -92,6 +115,38 @@ namespace rigid2d
     /// https://en.cppreference.com/w/cpp/io/basic_istream/peek
     /// https://en.cppreference.com/w/cpp/io/basic_istream/get
     std::istream & operator>>(std::istream & is, Vector2D & v);
+
+    /// \brief scalar multiplication of vector
+    /// \param lhs - scalar
+    /// \param rhs - vector to scale
+    /// \return the scaled vector
+    Vector2D operator*(double lhs, Vector2D & rhs);
+
+    /// \brief scalar multiplication of vector
+    /// \param lhs - scalar
+    /// \param rhs - vector to scale
+    /// \return the scaled vector
+    Vector2D operator*(Vector2D & rhs, double lhs);
+
+    /// \brief vector addition
+    /// \param lhs - vector 1
+    /// \param rhs - vector 2
+    /// \return sum of vectors
+    Vector2D operator+(Vector2D lhs, const Vector2D & rhs);
+
+    /// \brief vector addition
+    /// \param lhs - left hand side vector
+    /// \param rhs - right hand side vector
+    /// \return difference between vectors
+    Vector2D operator-(Vector2D lhs, const Vector2D & rhs);
+
+    /// \brief calculate magnitude of 2D vector
+    /// \return magnitude of vector
+    double magnitude(const Vector2D & v);
+
+    /// \brief calculate angle of 2D vector
+    /// \return angle of vector in radians
+    double angle(const Vector2D & v);
 
     /// \brief A 2-Dimensional Twist
     struct Twist2D

@@ -4,6 +4,18 @@
 
 namespace rigid2d
 {
+    Vector2D::Vector2D()
+    {
+        x = 0;
+        y = 0;
+    }
+
+    Vector2D::Vector2D(double x_in, double y_in)
+    {
+        x = x_in;
+        y = y_in;
+    }
+
     Vector2D Vector2D::normalize() const
     {
         Vector2D norm_v;
@@ -14,6 +26,63 @@ namespace rigid2d
         norm_v.y = y/len;
 
         return norm_v;
+    }
+
+    Vector2D & Vector2D::operator*=(const double & rhs)
+    {
+        x = rhs*x;
+        y = rhs*y;
+        return *this;
+    }
+
+    Vector2D & Vector2D::operator-=(const Vector2D & rhs)
+    {
+        x = x-rhs.x;
+        y = y-rhs.y;
+        return *this;
+    }
+
+    Vector2D & Vector2D::operator+=(const Vector2D & rhs)
+    {
+        x = x+rhs.x;
+        y = y+rhs.y;
+        return *this;
+    }
+
+    Vector2D operator*(double rhs, Vector2D & lhs)
+    {
+        Vector2D v;
+        v = lhs;
+
+        v*=rhs;
+        return v;
+    }
+
+    Vector2D operator*(Vector2D & rhs, double lhs)
+    {
+        Vector2D v;
+        v = rhs;
+
+        v*=lhs;
+        return v;
+    }
+
+    Vector2D operator+(Vector2D lhs, const Vector2D & rhs)
+    {
+        Vector2D v;
+        v = lhs;
+
+        v+=rhs;
+        return v;
+    }
+
+    Vector2D operator-(Vector2D lhs, const Vector2D & rhs)
+    {
+        Vector2D v;
+        v = lhs;
+
+        v-=rhs;
+        return v;
     }
 
     std::ostream & operator<<(std::ostream & os, const Vector2D & v)
@@ -46,6 +115,53 @@ namespace rigid2d
         }
         
         return is;
+    }
+
+    double magnitude(const Vector2D & v)
+    {
+        double mag;
+
+        mag = sqrt(pow(v.x,2)+pow(v.y,2));
+
+        return mag;
+    }
+
+    double angle(const Vector2D & v)
+    {
+        double ang;
+
+        ang = atan(v.y/v.x);
+
+        if(v.x<0 && v.y>=0)
+        {
+            if(v.y == 0)
+            {
+                ang = PI;
+            }
+            else
+            {
+                ang = -ang+(PI/2);
+            }
+        }
+
+        else if(v.x<=0 && v.y<0)
+        {
+            if(v.x == 0)
+            {
+                ang = ang+2*PI;
+            }
+            else
+            {
+                ang = ang+PI;
+            }
+        }
+
+        else if(v.x>0 && v.y<0)
+        {
+            ang = -ang+(3*PI/2);
+        }
+
+        return ang;
     }
 
     Transform2D::Transform2D()
@@ -170,8 +286,11 @@ namespace rigid2d
 
     Transform2D operator*(Transform2D lhs, const Transform2D & rhs)
     {
-        lhs*=rhs;
-        return lhs;
+        Transform2D T;
+        T = lhs;
+
+        T*=rhs;
+        return T;
     }
 
     std::istream & operator>>(std::istream & is, Transform2D & tf)
