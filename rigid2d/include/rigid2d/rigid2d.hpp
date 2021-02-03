@@ -266,6 +266,11 @@ namespace rigid2d
     /// \return transformation to new frame after twist
     Transform2D integrateTwist(const Twist2D & twist);
 
+    /// \brief converts a angle to [-PI PI]
+    /// \param twist - twist to integrate
+    /// \return transformation to new frame after twist
+    double normalize_angle(double rad);
+
 }
 
 #endif

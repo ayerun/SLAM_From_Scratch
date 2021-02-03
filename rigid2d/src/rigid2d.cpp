@@ -408,4 +408,17 @@ namespace rigid2d
 
         return Tbb_;
     }
+
+    double normalize_angle(double rad)
+    {
+        while(rad > PI)
+        {
+            rad = rad-2*PI;
+        }
+        while(rad < -PI)
+        {
+            rad = rad+2*PI;
+        }
+        return rad;
+    }
 }
