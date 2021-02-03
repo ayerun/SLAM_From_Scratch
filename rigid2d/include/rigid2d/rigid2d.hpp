@@ -151,9 +151,9 @@ namespace rigid2d
     /// \brief A 2-Dimensional Twist
     struct Twist2D
     {
-        double w;       //angular velocity
-        double x_dot;   //linear x velocity
-        double y_dot;   //linear y velocity
+        double w = 0;       //angular velocity
+        double x_dot = 0;   //linear x velocity
+        double y_dot = 0;   //linear y velocity
     };
 
     /// \brief output a 2 dimensional twist as [xcomponent ycomponent]
@@ -222,6 +222,10 @@ namespace rigid2d
         double getY() const;
 
         /// \brief accessor function for private members: used for testing
+        /// \return th
+        double getTheta() const;
+
+        /// \brief accessor function for private members: used for testing
         /// \return costh
         double getCtheta() const;
 
@@ -256,6 +260,11 @@ namespace rigid2d
     /// \return the composition of the two transforms
     /// HINT: This function should be implemented in terms of *=
     Transform2D operator*(Transform2D lhs, const Transform2D & rhs);
+
+    /// \brief computes transformation corresponding to a rigid body following a constant twist in its original body frame for one unit time
+    /// \param twist - twist to integrate
+    /// \return transformation to new frame after twist
+    Transform2D integrateTwist(const Twist2D & twist);
 
 }
 

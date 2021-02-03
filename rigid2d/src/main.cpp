@@ -22,6 +22,16 @@ int main()
     Twist2D tc;
     char sys;
 
+    Twist2D twist;
+    Transform2D Tbb_;
+
+    // twist.w = 0;
+    twist.x_dot = 1;
+    twist.y_dot = 2;
+    Tbb_ = integrateTwist(twist);
+    cout << Tbb_.getX() << endl;
+    cout << Tbb_ << endl;
+
     //get transformations
     cout << "Enter a Transformation (Tab): ";
     cin >> Tab;

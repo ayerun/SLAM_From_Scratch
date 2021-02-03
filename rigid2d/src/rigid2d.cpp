@@ -257,6 +257,11 @@ namespace rigid2d
         return y;
     }
 
+    double Transform2D::getTheta() const
+    {
+        return th;
+    }
+
     double Transform2D::getCtheta() const
     {
         return costh;
@@ -368,5 +373,39 @@ namespace rigid2d
         }
         
         return is;
+    }
+
+    Transform2D integrateTwist(const Twist2D & twist)
+    {
+        Transform2D Tbb_;
+
+        if(twist.w == 0)
+        {
+            Vector2D v;
+            
+            v.x = twist.x_dot;
+            v.y = twist.y_dot;
+            Tbb_ = Transform2D(v);
+        }
+
+        else
+        {
+            Transform2D Tbs_;
+            Vector2D bs;
+            Transform2D Ts_s;
+            Transform2D Tsb;
+            Transform2D Tbs;
+            Transform2D Ts_b_;
+
+            bs.y = -twist.x_dot/twist.w;
+            bs.x = twist.y_dot/twist.w;
+            Tbs_ = Transform2D(bs);
+            Ts_s = Transform2D(twist.w);
+            Tbs = Tbs_*Ts_s;
+            Ts_b_ = Tbs.inv();
+            Tbb_ = Tbs_*Ts_b_;
+        }
+
+        return Tbb_;
     }
 }

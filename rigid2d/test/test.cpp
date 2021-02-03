@@ -193,3 +193,48 @@ TEST_CASE("Change twist reference frame", "[transform]"){ // Edoardo, Rundeddu
 	REQUIRE(almost_equal(tw_out.x_dot, 7));
 	REQUIRE(almost_equal(tw_out.y_dot, 1));
 }
+
+TEST_CASE("Integrate twist pure rotation", "[integrateTwist]"){ // Arun, Kumar
+	using namespace rigid2d;
+
+    Twist2D twist;
+    Transform2D Tbb_;
+
+    twist.w = PI;
+    Tbb_ = integrateTwist(twist);
+
+    REQUIRE(almost_equal(Tbb_.getX(), 0));
+	REQUIRE(almost_equal(Tbb_.getY(), 0));
+	REQUIRE(almost_equal(Tbb_.getTheta(), PI));
+}
+
+TEST_CASE("Integrate twist pure translation", "[integrateTwist]"){ // Arun, Kumar
+	using namespace rigid2d;
+
+    Twist2D twist;
+    Transform2D Tbb_;
+
+    twist.x_dot = 1;
+    twist.y_dot = 2;
+    Tbb_ = integrateTwist(twist);
+
+    REQUIRE(almost_equal(Tbb_.getX(), 1));
+	REQUIRE(almost_equal(Tbb_.getY(), 2));
+	REQUIRE(almost_equal(Tbb_.getTheta(), 0));
+}
+
+TEST_CASE("Integrate twist translation and rotation", "[integrateTwist]"){ // Arun, Kumar
+	using namespace rigid2d;
+
+    Twist2D twist;
+    Transform2D Tbb_;
+
+    twist.x_dot = 1;
+    twist.y_dot = 1;
+    twist.w = 2*PI;
+    Tbb_ = integrateTwist(twist);
+
+    REQUIRE(almost_equal(Tbb_.getX(), 0));
+	REQUIRE(almost_equal(Tbb_.getY(), 0));
+	REQUIRE(almost_equal(Tbb_.getTheta(), 0));
+}
