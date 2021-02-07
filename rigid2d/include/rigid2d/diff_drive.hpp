@@ -19,20 +19,23 @@ namespace rigid2d
         /// \brief create a DiffDrive object at specified location
         /// \param b - wheel base 
         /// \param r - wheel radius
-        /// \param x_coor - x coordinate
-        /// \param y_coor - y coordinate
-        /// \param theta - rotation
-        DiffDrive(double b, double r, double x_coor, double y_coor, double theta);
+        /// \param trans - Transform from world frame to body frame
+        DiffDrive(double b, double r, Transform2D trans);
 
         /// \brief convert twist to wheel velocities
         /// \param Vb - desired twist
-        /// \return Vector of wheel velocities [left_w_velocity, right_wheel_velocity]
-        Vector2D calculateVelocity(Twist2D Vb);
-        //write body frame twist in each wheel frame
+        /// \return Vector of wheel velocities [left_velocity, right_velocity]
+        Vector2D calculateControls(Twist2D Vb);
+
+        /// \brief convert wheel velocities to twist
+        /// \param u - robot controls [left_velocity, right_velocity]
+        /// \return body twist
+        Twist2D calculateTwist(Vector2D u);
 
         /// \brief update robot configuration
-        /// \param angs - list of updated wheel angles [left_angle, right_angle]
-        void updateConfiguration(double angs);
+        /// \param angs - Vector of updated wheel angles [left_angle, right_angle]
+        void updateConfiguration(Vector2D angs);
+        // convert control to body twist
 
         /// \brief accessor function for private members
         /// \return base
@@ -43,23 +46,13 @@ namespace rigid2d
         double getRadius();
 
         /// \brief accessor function for private members
-        /// \return x
-        double getX();
-
-        /// \brief accessor function for private members
-        /// \return y
-        double getY();
-
-        /// \brief accessor function for private members
-        /// \return theta
-        double getTheta();
+        /// \return Twb
+        Transform2D getTransform();
 
     private:
         double base;
         double radius;
-        double x;
-        double y;
-        double th;
+        Transform2D Twb;
     };
 }
 

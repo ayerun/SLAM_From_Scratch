@@ -8,30 +8,24 @@ namespace rigid2d
     {
         base = 0;
         radius = 0;
-        x = 0;
-        y = 0;
-        th = 0;
+        Twb = Transform2D();
     }
 
     DiffDrive::DiffDrive(double b, double r)
     {
         base = b;
         radius = r;
-        x = 0;
-        y = 0;
-        th = 0;
+        Twb = Transform2D();
     }
 
-    DiffDrive::DiffDrive(double b, double r, double x_coor, double y_coor, double theta)
+    DiffDrive::DiffDrive(double b, double r, Transform2D trans)
     {
         base = b;
         radius = r;
-        x = x_coor;
-        y = y_coor;
-        th = theta;
+        Twb = trans;
     }
 
-    Vector2D DiffDrive::calculateVelocity(Twist2D Vb)
+    Vector2D DiffDrive::calculateControls(Twist2D Vb)
     {
         Vector2D controls;
         double D = base/2;
@@ -40,6 +34,18 @@ namespace rigid2d
         controls.y = (D*Vb.w+Vb.x_dot)/radius;
 
         return controls;
+    }
+
+    Twist2D DiffDrive::calculateTwist(Vector2D u)
+    {
+        Twist2D T;
+        double D = base/2;
+
+        T.w = (u.y-u.x)/(4*D);
+        T.x_dot = (u.y+u.x)/(4);
+        T.y_dot = 0;
+
+        return T;
     }
 
     double DiffDrive::getBase()
@@ -52,18 +58,8 @@ namespace rigid2d
         return radius;
     }
 
-    double DiffDrive::getX()
+    Transform2D DiffDrive::getTransform()
     {
-        return x;
-    }
-
-    double DiffDrive::getY()
-    {
-        return y;
-    }
-
-    double DiffDrive::getTheta()
-    {
-        return th;
+        return Twb;
     }
 }
