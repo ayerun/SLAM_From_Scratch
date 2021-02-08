@@ -252,7 +252,6 @@ TEST_CASE("Calculate wheel controls given body twist", "[calculateControls]"){ /
     Vb.x_dot = 0;
     controls = dd.calculateControls(Vb);
 
-
     REQUIRE(almost_equal(controls.x, -PI));
 	REQUIRE(almost_equal(controls.y, PI));
 }
@@ -271,8 +270,25 @@ TEST_CASE("Calculate body twist given wheel controls", "[calculateTwist]"){ // A
     controls = dd.calculateControls(Vb);
     Vb_ = dd.calculateTwist(controls);
 
-
-
     REQUIRE(almost_equal(Vb_.w, PI));
 	REQUIRE(almost_equal(Vb_.x_dot, 32));
+}
+
+TEST_CASE("Odometry used to update robot configuration", "[updateConfiguration]"){ // Arun, Kumar
+	using namespace rigid2d;
+
+    DiffDrive dd;
+    Twist2D Vb;
+    Vector2D controls;
+    Twist2D Vb_;
+
+    dd = DiffDrive(2,1);
+    Vb.w = 2*PI;
+    Vb.x_dot = 10;
+    controls = dd.calculateControls(Vb);
+    dd.updateConfiguration(controls);
+
+    REQUIRE(almost_equal(dd.getTransform().getX(), 0));
+	REQUIRE(almost_equal(dd.getTransform().getY(), 0));
+    REQUIRE(almost_equal(dd.getTransform().getTheta(), 0));
 }
