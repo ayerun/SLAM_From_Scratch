@@ -1,6 +1,7 @@
 
 #include <catch_ros/catch.hpp>
 #include <rigid2d/rigid2d.hpp>
+#include <rigid2d/diff_drive.hpp>
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -237,4 +238,57 @@ TEST_CASE("Integrate twist translation and rotation", "[integrateTwist]"){ // Ar
     REQUIRE(almost_equal(Tbb_.getX(), 0));
 	REQUIRE(almost_equal(Tbb_.getY(), 0));
 	REQUIRE(almost_equal(Tbb_.getTheta(), 0));
+}
+
+TEST_CASE("Calculate wheel controls given body twist", "[calculateControls]"){ // Arun, Kumar
+	using namespace rigid2d;
+
+    DiffDrive dd;
+    Twist2D Vb;
+    Vector2D controls;
+
+    dd = DiffDrive(2,1);
+    Vb.w = PI;
+    Vb.x_dot = 0;
+    controls = dd.calculateControls(Vb);
+
+    REQUIRE(almost_equal(controls.x, -PI));
+	REQUIRE(almost_equal(controls.y, PI));
+}
+
+TEST_CASE("Calculate body twist given wheel controls", "[calculateTwist]"){ // Arun, Kumar
+	using namespace rigid2d;
+
+    DiffDrive dd;
+    Twist2D Vb;
+    Vector2D controls;
+    Twist2D Vb_;
+
+    dd = DiffDrive(2,1);
+    Vb.w = PI;
+    Vb.x_dot = 32;
+    controls = dd.calculateControls(Vb);
+    Vb_ = dd.calculateTwist(controls);
+
+    REQUIRE(almost_equal(Vb_.w, PI));
+	REQUIRE(almost_equal(Vb_.x_dot, 32));
+}
+
+TEST_CASE("Odometry used to update robot configuration", "[updateConfiguration]"){ // Arun, Kumar
+	using namespace rigid2d;
+
+    DiffDrive dd;
+    Twist2D Vb;
+    Vector2D controls;
+    Twist2D Vb_;
+
+    dd = DiffDrive(2,1);
+    Vb.w = 2*PI;
+    Vb.x_dot = 10;
+    controls = dd.calculateControls(Vb);
+    dd.updateConfiguration(controls);
+
+    REQUIRE(almost_equal(dd.getTransform().getX(), 0));
+	REQUIRE(almost_equal(dd.getTransform().getY(), 0));
+    REQUIRE(almost_equal(dd.getTransform().getTheta(), 0));
 }
