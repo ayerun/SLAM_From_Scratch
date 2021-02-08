@@ -230,14 +230,14 @@ TEST_CASE("Integrate twist translation and rotation", "[integrateTwist]"){ // Ar
     Twist2D twist;
     Transform2D Tbb_;
 
-    twist.x_dot = 1;
-    twist.y_dot = 1;
+    twist.x_dot = 10;
+    twist.y_dot = 0;
     twist.w = 2*PI;
     Tbb_ = integrateTwist(twist);
 
     REQUIRE(almost_equal(Tbb_.getX(), 0));
 	REQUIRE(almost_equal(Tbb_.getY(), 0));
-	REQUIRE(almost_equal(Tbb_.getTheta(), 0));
+	REQUIRE(almost_equal(normalize_angle(Tbb_.getTheta()), 0));
 }
 
 TEST_CASE("Calculate wheel controls given body twist", "[calculateControls]"){ // Arun, Kumar

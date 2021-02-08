@@ -186,7 +186,7 @@ namespace rigid2d
     {
         x = 0;
         y = 0;
-        th = radians;
+        th = normalize_angle(radians);
         sinth = sin(radians);
         costh = cos(radians);
     }
@@ -195,7 +195,7 @@ namespace rigid2d
     {
         x = trans.x;
         y = trans.y;
-        th = radians;
+        th = normalize_angle(radians);
         sinth = sin(radians);
         costh = cos(radians);
     }
@@ -392,18 +392,19 @@ namespace rigid2d
         {
             Transform2D Tbs_;
             Vector2D bs;
-            Transform2D Ts_s;
+            Transform2D Tss_;
             Transform2D Tsb;
             Transform2D Tbs;
-            Transform2D Ts_b_;
+            Transform2D Tb_s_;
 
             bs.y = -twist.x_dot/twist.w;
             bs.x = twist.y_dot/twist.w;
-            Tbs_ = Transform2D(bs);
-            Ts_s = Transform2D(twist.w);
-            Tbs = Tbs_*Ts_s;
-            Ts_b_ = Tbs.inv();
-            Tbb_ = Tbs_*Ts_b_;
+            Tbs = Transform2D(bs);
+            Tss_ = Transform2D(twist.w);
+            // Tbs_ = Tbs*Tss_;
+            // bs.x = -bs.x;
+            Tb_s_ = Transform2D(bs);
+            Tbb_ = Tbs*Tss_*(Tb_s_.inv());
         }
 
         return Tbb_;

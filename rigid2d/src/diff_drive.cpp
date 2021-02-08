@@ -62,13 +62,13 @@ namespace rigid2d
         Tbb_ = integrateTwist(Vb);
 
         //store Tbb' into twist dq
-        dq.w = Tbb_.getTheta();
+        dq.w = Tbb_.getTheta()+Twb.getTheta();
         dq.x_dot = Tbb_.getX();
         dq.y_dot = Tbb_.getY();
 
         //use adjoint to convert twist from body frame to world frame
-        trans.x = dq.x_dot*Twb.getCtheta()-dq.y_dot*Twb.getStheta();
-        trans.y = dq.x_dot*Twb.getStheta()+dq.y_dot*Twb.getCtheta();
+        trans.x = (dq.x_dot*Twb.getCtheta()-dq.y_dot*Twb.getStheta())+Twb.getX();
+        trans.y = (dq.x_dot*Twb.getStheta()+dq.y_dot*Twb.getCtheta())+Twb.getY();
 
         //update private member
         Twb = Transform2D(trans,dq.w);
