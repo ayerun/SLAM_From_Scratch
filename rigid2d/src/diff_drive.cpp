@@ -41,8 +41,8 @@ namespace rigid2d
         Twist2D T;
         double D = base/2;
 
-        T.w = (u.y-u.x)/(4*D);
-        T.x_dot = (u.y+u.x)/(4);
+        T.w = radius*(u.y-u.x)/(2*D);
+        T.x_dot = radius*(u.y+u.x)/(2);
         T.y_dot = 0;
 
         return T;
