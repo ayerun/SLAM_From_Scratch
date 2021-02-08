@@ -35,7 +35,6 @@ namespace rigid2d
         /// \brief update robot configuration
         /// \param angs - Vector of updated wheel angles [left_angle, right_angle]
         void updateConfiguration(Vector2D angs);
-        // convert control to body twist
 
         /// \brief accessor function for private members
         /// \return base

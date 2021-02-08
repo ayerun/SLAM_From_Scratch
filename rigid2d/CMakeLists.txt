@@ -155,9 +155,11 @@ add_dependencies(${PROJECT_NAME}_fake_turtle ${${PROJECT_NAME}_EXPORTED_TARGETS}
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_odometer
   ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
 )
 target_link_libraries(${PROJECT_NAME}_fake_turtle
   ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
 )
 
 #############

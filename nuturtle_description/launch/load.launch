@@ -1,5 +1,6 @@
 
 <launch>
+  <arg name="use_js" default="true" doc='launches joint_state_publisher' />
   <arg name="use_rviz" default="true" doc='launches rviz and joint_state_publisher'/>
   <arg name="multi_robot_name" default="" doc='sets tf_prefix if launching multiple robots'/>
 
@@ -13,7 +14,7 @@
   </node>
 
   <group if='$(arg use_rviz)'>
-    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher">
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" if='$(arg use_js)'>
       <param name="use_gui" value="true"/>
       <param name="rate" value="50"/>
     </node>

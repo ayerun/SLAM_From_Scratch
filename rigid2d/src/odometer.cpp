@@ -37,7 +37,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
 
     //initialize subscribers and publishers
-    js_sub = nh.subscribe("joint_state", 10, jsCallback);
+    js_sub = nh.subscribe("joint_states", 10, jsCallback);
     pub = nh.advertise<nav_msgs::Odometry>("odom", 10);
 
     //get parameters
@@ -47,6 +47,15 @@ int main(int argc, char** argv)
     ros::param::get("/right_wheel_joint", right_wheel_joint);
     ros::param::get("/wheel_base", base);
     ros::param::get("/wheel_radius", radius);
+
+    ros::Rate r(200);     //looping rate
+    ros::Duration(2).sleep();   //give 2 seconds for everything to initialize
+
+    while(ros::ok())
+    {
+        ros::spinOnce();
+        r.sleep();
+    }
 
     return 0;
 }

@@ -1,11 +1,21 @@
 <launch>
+
+    <!-- visualize apollo -->
+    <include file="$(find nuturtle_description)/launch/load.launch" >
+        <arg name="use_js" value="false"/>
+    </include>
+
+    <!-- launch nodes -->
     <node name="teleop" pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" />
     <node name="odometer" pkg="rigid2d" type="rigid2d_odometer" />
     <node name="fake_turtle" pkg="rigid2d" type="rigid2d_fake_turtle" />
+
+    <!-- parameters for nodes -->
     <rosparam param="wheel_base">0.16</rosparam>
     <rosparam param="wheel_radius">0.033</rosparam>
     <rosparam param="left_wheel_joint">wheel_left_joint</rosparam>
     <rosparam param="right_wheel_joint">wheel_right_joint</rosparam>
     <rosparam param="odom_frame_id">odom</rosparam>
     <rosparam param="body_frame_id">body</rosparam>
+
 </launch>

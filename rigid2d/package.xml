@@ -54,6 +54,7 @@
   <build_export_depend>catch_ros</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
   <exec_depend>catch_ros</exec_depend>
+  <exec_depend>nuturtle_description</exec_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>turtlebot3_teleop</exec_depend>
 
