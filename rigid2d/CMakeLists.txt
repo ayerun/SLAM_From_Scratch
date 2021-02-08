@@ -124,9 +124,9 @@ include_directories(
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
-  src/${PROJECT_NAME}.cpp
+  #src/${PROJECT_NAME}.cpp
   src/diff_drive.cpp
-  #src/rigid2d.cpp
+  src/rigid2d.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -200,10 +200,10 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## Testing ##
 #############
 
-catch_add_test(rigid2d_test
+catch_add_test(${PROJECT_NAME}_test
 	test/test.cpp
 )
-target_link_libraries(rigid2d_test
+target_link_libraries(${PROJECT_NAME}_test
 	${catkin_LIBRARIES}
   ${PROJECT_NAME}
 )
