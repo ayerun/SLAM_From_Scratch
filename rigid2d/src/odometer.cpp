@@ -27,6 +27,7 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/transform_broadcaster.h>
+#include <rigid2d/set_pose.h>
 
 //global variables
 static ros::Subscriber js_sub;                  //joint state subscriber
@@ -39,7 +40,7 @@ static sensor_msgs::JointState js_new;          //incoming joint state message
 static sensor_msgs::JointState js_old;          //previous joint state message
 static nav_msgs::Odometry odom;                 //odometry messgae
 static geometry_msgs::Quaternion g_rot;         //geometry messages quaternion
-static geometry_msgs::TransformStamped trans;   
+static geometry_msgs::TransformStamped trans;   //transform stamped message
 static tf2::Quaternion rot;                     //tf2 quaternion
 static rigid2d::Vector2D angs;                  //wheel angles
 static rigid2d::Vector2D controls;              //wheel velocities
@@ -65,7 +66,7 @@ void jsCallback(const sensor_msgs::JointStateConstPtr &js_msg)
     Vb = dd.calculateTwist(controls);
 
     //update robot configuration
-    dd.updateConfiguration(angs));
+    dd.updateConfiguration(angs);
 
     js_old = js_new;
 }
@@ -114,6 +115,29 @@ void broadcast()
     br.sendTransform(trans);
 }
 
+/// \brief resets Apollo's odometry to the given pose
+/// \param req - service request
+///              x: x coordinate
+///              y: y coordinate
+///              theta: rotation
+/// \param resp - service response (empty)
+/// \return true when callback complete
+bool setposeCallback(rigid2d::set_pose::Request &req, rigid2d::set_pose::Response &res)
+{
+    rigid2d::Vector2D pos;
+    rigid2d::Transform2D new_pose;
+
+    //Create transformation for new position and orientation
+    pos.x = req.x;
+    pos.y = req.y;
+    new_pose = rigid2d::Transform2D(pos,req.theta);
+
+    //reinitialize differential drive object
+    dd = rigid2d::DiffDrive(base,radius,new_pose);
+    
+    return true;
+}
+
 /// \brief initializes node, subscriber, publisher, parameters, and objects
 /// \param argc - initialization arguement
 /// \param argv - initialization arguement
@@ -154,6 +178,9 @@ int main(int argc, char** argv)
     //set transformstamped message frame ids
     trans.header.frame_id = odom_frame_id;
     trans.child_frame_id = body_frame_id;
+
+    //initialize service
+    ros::ServiceServer service = nh.advertiseService("set_pose",setposeCallback);
 
     ros::Rate r(frequency); //looping rate
 
