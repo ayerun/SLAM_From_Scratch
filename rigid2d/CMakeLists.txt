@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   catch_ros
   roscpp
   tf2
+  tf2_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -108,7 +109,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES rigid2d
- CATKIN_DEPENDS catch_ros roscpp tf2
+ CATKIN_DEPENDS catch_ros roscpp tf2 tf2_ros
 #  DEPENDS system_lib
 )
 
