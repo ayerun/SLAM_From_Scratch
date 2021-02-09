@@ -2,7 +2,8 @@
 
     <!-- visualize apollo -->
     <include file="$(find nuturtle_description)/launch/load.launch" >
-        <arg name="use_js" value="false"/>
+        <arg name="use_myOdom" value="true"/>
+        <arg name="use_rviz" value="false"/>
     </include>
 
     <!-- launch nodes -->

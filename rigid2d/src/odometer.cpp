@@ -2,11 +2,18 @@
 /// \brief 
 ///
 /// PARAMETERS:
-///
+///     wheel_base (double): distance between diff drive wheels
+///     wheel_radius (double): wheel radius
+///     left_wheel_joint (string): name of left wheel joint
+///     right_wheel_joint (string): name of right wheel joint
+///     odom_frame_id (string): name of odom frame
+///     body_frame_id (string): name of body frame
 /// PUBLISHES:
-///     
+///     odom (nav_msgs/Odometry): Apollo odometry
 /// SUBSCRIBES:
 ///     /joint_states (sensor_msgs/JointState)
+/// BROADCASTS:
+///     transfrom from /odom to /base_footprint
 /// SERVICES:
 ///     
 
@@ -22,25 +29,25 @@
 #include <tf2_ros/transform_broadcaster.h>
 
 //global variables
-static ros::Subscriber js_sub;              //joint state subscriber
-static ros::Publisher pub;                  //odometry publisher
-static tf2_ros::TransformBroadcaster br;    //transform broadcaster
-static std::string odom_frame_id;           //odometry frame name
-static std::string body_frame_id;           //body frame name
-static std::string left_wheel_joint;        //left wheel joint name
-static std::string right_wheel_joint;       //right wheel joint name
-static sensor_msgs::JointState js_new;      //incoming joint state message
-static sensor_msgs::JointState js_old;      //previous joint state message
-static nav_msgs::Odometry odom;             //odometry messgae
-static geometry_msgs::Quaternion g_rot;     //geometry messages quaternion
-static tf2::Quaternion rot;                 //tf2 quaternion
-static rigid2d::Vector2D angs;              //wheel angles
-static rigid2d::Vector2D controls;          //wheel velocities
-static rigid2d::Twist2D Vb;                 //body velocity
-static rigid2d::DiffDrive dd;               //differential drive object
-static double base;                         //wheel separation
-static double radius;                       //wheel radius
-static const int frequency = 200;           //publishing frequency
+static ros::Subscriber js_sub;                  //joint state subscriber
+static ros::Publisher pub;                      //odometry publisher
+static std::string odom_frame_id;               //odometry frame name
+static std::string body_frame_id;               //body frame name
+static std::string left_wheel_joint;            //left wheel joint name
+static std::string right_wheel_joint;           //right wheel joint name
+static sensor_msgs::JointState js_new;          //incoming joint state message
+static sensor_msgs::JointState js_old;          //previous joint state message
+static nav_msgs::Odometry odom;                 //odometry messgae
+static geometry_msgs::Quaternion g_rot;         //geometry messages quaternion
+static geometry_msgs::TransformStamped trans;   
+static tf2::Quaternion rot;                     //tf2 quaternion
+static rigid2d::Vector2D angs;                  //wheel angles
+static rigid2d::Vector2D controls;              //wheel velocities
+static rigid2d::Twist2D Vb;                     //body velocity
+static rigid2d::DiffDrive dd;                   //differential drive object
+static double base;                             //wheel separation
+static double radius;                           //wheel radius
+static const int frequency = 200;               //publishing frequency
 
 /// \brief subscriber callback that tracks odometry
 /// \param js_msg - current joint state
@@ -58,7 +65,7 @@ void jsCallback(const sensor_msgs::JointStateConstPtr &js_msg)
     Vb = dd.calculateTwist(controls);
 
     //update robot configuration
-    dd.updateConfiguration(angs);
+    dd.updateConfiguration(angs));
 
     js_old = js_new;
 }
@@ -66,16 +73,45 @@ void jsCallback(const sensor_msgs::JointStateConstPtr &js_msg)
 /// \brief oublish odometry
 void publishOdom()
 {
+    //time
     odom.header.stamp = ros::Time::now();
+
+    //twist
     odom.twist.twist.angular.z = Vb.w;
     odom.twist.twist.linear.x = Vb.x_dot;
     odom.twist.twist.linear.y = Vb.y_dot;
+
+    //position
     odom.pose.pose.position.x = dd.getTransform().getX();
     odom.pose.pose.position.y = dd.getTransform().getY();
+
+    //orientation
     rot.setRPY(0,0,dd.getTransform().getTheta());
     g_rot = tf2::toMsg(rot);
     odom.pose.pose.orientation = g_rot;
+
+    //publish
     pub.publish(odom);
+}
+
+/// \brief broadcast transform from odom to base_footprint
+void broadcast()
+{
+    static tf2_ros::TransformBroadcaster br;
+    
+    //time
+    trans.header.stamp = ros::Time::now();
+
+    //position
+    trans.transform.translation.x = dd.getTransform().getX();
+    trans.transform.translation.y = dd.getTransform().getY();
+    trans.transform.translation.z = 0;
+
+    //orientation
+    trans.transform.rotation = g_rot;
+
+    //broadcast
+    br.sendTransform(trans);
 }
 
 /// \brief initializes node, subscriber, publisher, parameters, and objects
@@ -103,6 +139,7 @@ int main(int argc, char** argv)
     //initialize differential drive object
     dd = rigid2d::DiffDrive(base,radius);
 
+    //initialize joint state message at 0s
     js_old.name.push_back(left_wheel_joint);
     js_old.name.push_back(right_wheel_joint);
     js_old.position.push_back(0);
@@ -110,15 +147,21 @@ int main(int argc, char** argv)
     js_old.velocity.push_back(0);
     js_old.velocity.push_back(0);
 
+    //set odometry message frame ids
     odom.child_frame_id = body_frame_id;
     odom.header.frame_id = odom_frame_id;
 
-    ros::Rate r(frequency);     //looping rate
+    //set transformstamped message frame ids
+    trans.header.frame_id = odom_frame_id;
+    trans.child_frame_id = body_frame_id;
+
+    ros::Rate r(frequency); //looping rate
 
     while(ros::ok())
     {
         ros::spinOnce();
         publishOdom();
+        broadcast();
         r.sleep();
     }
 
