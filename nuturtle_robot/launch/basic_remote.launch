@@ -1,0 +1,10 @@
+<launch>
+    <arg name="robot" default="apollo"/>
+
+    <machine name="turtlebot" user="ubuntu" address="$(arg robot).local" env-loader="/home/ubuntu/loader.sh" default="true"/>
+
+    <node machine="turtlebot" pkg="rosserial_python" type="serial_node.py" name="turtlebot3_core">
+        <param name="port" value="/dev/ttyACM0"/>
+        <param name="baud" value="115200"/>
+    </node>
+</launch>

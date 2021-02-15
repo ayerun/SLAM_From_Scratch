@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find rigid2d)/launch/fake_turtle_odom.launch" />
+    <node name="follow_circle" pkg="nuturtle_robot" type="nuturtle_robot_follow_circle" output="screen" />
+</launch>
