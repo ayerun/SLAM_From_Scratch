@@ -107,8 +107,8 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES rigid2d
+ INCLUDE_DIRS include
+ LIBRARIES ${PROJECT_NAME}
  CATKIN_DEPENDS catch_ros message_runtime roscpp tf2 tf2_ros
 #  DEPENDS system_lib
 )
@@ -155,6 +155,7 @@ add_dependencies(${PROJECT_NAME}_odometer ${${PROJECT_NAME}_EXPORTED_TARGETS} ${
 add_dependencies(${PROJECT_NAME}_fake_turtle ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}_odometer
   ${catkin_LIBRARIES}
   ${PROJECT_NAME}
