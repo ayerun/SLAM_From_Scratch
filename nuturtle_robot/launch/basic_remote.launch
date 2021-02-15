@@ -3,7 +3,7 @@
 
     <machine name="turtlebot" user="ubuntu" address="$(arg robot)" env-loader="/home/ubuntu/loader.sh" default="true"/>
 
-    <node machine="turtlebot" pkg="rosserial_python" type="serial_node.py" name="turtlebot3_core">
+    <node machine="turtlebot" pkg="rosserial_python" type="serial_node.py" name="apollo_core">
         <param name="port" value="/dev/ttyACM0"/>
         <param name="baud" value="115200"/>
     </node>
