@@ -1,4 +1,11 @@
 <launch>
-  <node name="turtle_interface" pkg="nuturtle_robot" type="nuturtle_robot_turtle_interface" output="screen" />
-  <test test-name="turtle_interface" pkg="nuturtle_robot" type="turtle_interface_test" time-limit="6.5" />
+
+    <rosparam param="wheel_base">0.16</rosparam>
+    <rosparam param="wheel_radius">0.033</rosparam>
+    <rosparam param="left_wheel_joint">wheel_left_joint</rosparam>
+    <rosparam param="right_wheel_joint">wheel_right_joint</rosparam>
+
+    <node name="turtle_interface" pkg="nuturtle_robot" type="nuturtle_robot_turtle_interface" output="screen" />
+    <test test-name="turtle_interface_test" pkg="nuturtle_robot" type="turtle_interface_test" time-limit="6.5" />
+
 </launch>
