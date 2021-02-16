@@ -187,6 +187,7 @@ int main(int argc, char** argv)
     while(ros::ok())
     {
         ros::spinOnce();
+        // std::cout << dd.getTransform();
         publishOdom();
         broadcast();
         r.sleep();

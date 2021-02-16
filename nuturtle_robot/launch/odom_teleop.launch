@@ -21,11 +21,13 @@
         <rosparam param="radius">0.1</rosparam>
     </node>
 
+    <node name="odometer" pkg="rigid2d" type="rigid2d_odometer" output="screen"/>
+
     <machine name="turtlebot" user="ubuntu" address="$(arg robot)" env-loader="/home/ubuntu/loader.sh" default="true"/>
 
     <include file="$(find nuturtle_robot)/launch/basic_remote.launch" />
 
     <node machine="turtlebot" name="turtle_interface" pkg="nuturtle_robot" type="nuturtle_robot_turtle_interface" />
-    <node machine="turtlebot" name="odometer" pkg="rigid2d" type="rigid2d_odometer" />
+    
 
 </launch>

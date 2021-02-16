@@ -8,7 +8,7 @@
 
     <!-- launch nodes -->
     <node name="teleop" pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" />
-    <node name="odometer" pkg="rigid2d" type="rigid2d_odometer" output="screen" />
+    <node name="odometer" pkg="rigid2d" type="rigid2d_odometer" />
     <node name="fake_turtle" pkg="rigid2d" type="rigid2d_fake_turtle" />
 
     <!-- parameters for nodes -->

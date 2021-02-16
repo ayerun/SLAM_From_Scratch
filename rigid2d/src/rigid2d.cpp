@@ -379,7 +379,7 @@ namespace rigid2d
     {
         Transform2D Tbb_;
 
-        if(twist.w == 0)
+        if(almost_equal(twist.w,0))
         {
             Vector2D v;
             
@@ -397,12 +397,10 @@ namespace rigid2d
             Transform2D Tbs;
             Transform2D Tb_s_;
 
-            bs.y = -twist.x_dot/twist.w;
-            bs.x = twist.y_dot/twist.w;
+            bs.x = -twist.x_dot/twist.w;
+            bs.y = twist.y_dot/twist.w;
             Tbs = Transform2D(bs);
             Tss_ = Transform2D(twist.w);
-            // Tbs_ = Tbs*Tss_;
-            // bs.x = -bs.x;
             Tb_s_ = Transform2D(bs);
             Tbb_ = Tbs*Tss_*(Tb_s_.inv());
         }
