@@ -4,7 +4,6 @@
 #include <nuturtlebot/WheelCommands.h>
 #include <nuturtlebot/SensorData.h>
 #include <sensor_msgs/JointState.h>
-#include <std_msgs/Float32.h>
 #include <geometry_msgs/Twist.h>
 #include <rigid2d/rigid2d.hpp>
 
@@ -12,7 +11,6 @@ static ros::Subscriber cmd_sub;
 static ros::Publisher controls_pub;
 static ros::Subscriber sensor_sub;
 static ros::Publisher joint_pub;
-static ros::Publisher trans_pub;
 static sensor_msgs::JointState js;
 static std::string left_wheel_joint;    //name of left wheel joint
 static std::string right_wheel_joint;   //name of right wheel joint
@@ -21,10 +19,11 @@ static nuturtlebot::SensorData data_old;
 static nuturtlebot::SensorData data_first;
 static nuturtlebot::WheelCommands controls_msg;
 static rigid2d::DiffDrive dd;
+static rigid2d::Vector2D velocity;
 static double base;
 static double radius;
 static double mapping_constant;
-static int frequency = 200;
+static int frequency = 50;
 static bool first = true;
 
 void cmdCallback(const geometry_msgs::TwistConstPtr &twis)
@@ -36,12 +35,6 @@ void cmdCallback(const geometry_msgs::TwistConstPtr &twis)
     Vb.w = twis->angular.z;
     Vb.y_dot = 0;
     controls = dd.calculateControls(Vb);
-
-    //debug
-    dd.updateConfiguration(controls);
-    std_msgs::Float32 y;
-    y.data = dd.getTransform().getY();
-    trans_pub.publish(y);
 
     //mapping
     controls_msg.left_velocity = 256*controls.x/mapping_constant;
@@ -83,6 +76,7 @@ void sensorCallback(const nuturtlebot::SensorDataConstPtr &data)
         //publish joint state
         joint_pub.publish(js);
 
+        dd.updateConfiguration(angs);
         data_old = data_new;
     }
 }
@@ -97,8 +91,6 @@ int main(int argc, char** argv)
     sensor_sub = nh.subscribe("/sensor_data", 10, sensorCallback);
     controls_pub = nh.advertise<nuturtlebot::WheelCommands>("/wheel_cmd", 10);
     joint_pub = nh.advertise<sensor_msgs::JointState>("/joint_states", 10);
-    trans_pub = nh.advertise<std_msgs::Float32>("/transform", 10);
-
 
     //get parameters
     ros::param::get("/wheel_base", base);
