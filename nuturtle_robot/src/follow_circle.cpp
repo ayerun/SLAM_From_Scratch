@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
     ros::Rate r(frequency);
 
     cmd.linear.x = speed;
-    cmd.angular.z = rad/speed;
+    cmd.angular.z = speed/rad;
 
     while(ros::ok())
     {
