@@ -107,7 +107,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES nuturtle_robot
- CATKIN_DEPENDS roscpp
+ CATKIN_DEPENDS rigid2d roscpp
 #  DEPENDS system_lib
 )
 
@@ -220,3 +220,17 @@ install(DIRECTORY
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+catch_add_rostest_node(turtle_interface_test
+  test/turtle_interface_test.cpp
+)
+target_link_libraries(turtle_interface_test
+  ${catkin_LIBRARIES}
+)
+
+if (CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_rostest(test/turtle_interface.test)
+endif()
+
+
