@@ -1,0 +1,4 @@
+bool clockwise
+bool stop
+---
+string final

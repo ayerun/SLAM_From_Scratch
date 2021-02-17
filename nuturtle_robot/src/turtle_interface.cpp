@@ -23,7 +23,7 @@ static rigid2d::Vector2D velocity;
 static double base;
 static double radius;
 static double mapping_constant;
-static int frequency = 50;
+static int frequency = 200;
 static bool first = true;
 
 void cmdCallback(const geometry_msgs::TwistConstPtr &twis)
