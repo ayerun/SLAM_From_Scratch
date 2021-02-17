@@ -23,9 +23,9 @@ Note: Gif only shows portion of experiment
 * Record odometry:
     * x = 0.0000445
     * y = -0.0000181
-    * θ = 0.180 rad
+    * θ = 0.180 rad  return
 ![Experiment2](gifs/experiment2.gif)
-![Screencast2](gifs/screen2.gif)
+![Screencast2](gifs/screen2.gif)  return
 Note: Gif only shows portion of experiment
 
 ## Experiment 3
