@@ -12,9 +12,9 @@ roslaunch nuturtle_robot odom_teleop.launch
 * Record odometry:
     * x = 0.0302
     * y = 0.0165
-    * θ = 0.000600 rad
+    * θ = 0.000600 rad <br/>
 ![Experiment1](gifs/experiment1.gif)
-![Screencast1](gifs/screen1.gif)
+![Screencast1](gifs/screen1.gif) <br/>
 Note: Gif only shows portion of experiment
 
 ## Experiment 2
@@ -34,8 +34,10 @@ Note: Gif only shows portion of experiment
 * Record odometry:
     * x = -0.0290
     * y = 0.0633
-    * θ = 0.398 rad
-<insert gif>
+    * θ = 0.398 rad <br/>
+![Experiment3](gifs/experiment3.gif)
+![Screencast3](gifs/screen3.gif) <br/>
+Note: Gif only shows portion of experiment
 
 ## Experiment 4
 * Drive robot in circle clockwise and counter clockwise (translation plus rotation)
@@ -46,5 +48,7 @@ Note: Gif only shows portion of experiment
 * Record odometry:
     * x = -0.282
     * y = 0.205
-    * θ = 1.74 rad
-<insert gif>
+    * θ = 1.74 rad <br/>
+![Experiment4](gifs/experiment4.gif)
+![Screencast4](gifs/screen4.gif) <br/>
+Note: Gif only shows portion of experiment
