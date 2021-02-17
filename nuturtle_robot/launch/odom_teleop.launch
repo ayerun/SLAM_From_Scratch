@@ -16,9 +16,9 @@
 
     <node name="teleop" pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" unless="$(arg circle)"/>
 
-    <node name="follow_circle" pkg="nuturtle_robot" type="nuturtle_robot_follow_circle" output="screen" if="$(arg circle)">
-        <rosparam param="speed">0.1</rosparam>
-        <rosparam param="radius">0.1</rosparam>
+    <node name="follow_circle" pkg="nuturtle_robot" type="nuturtle_robot_follow_circle" if="$(arg circle)">
+        <rosparam param="speed">0.16</rosparam>
+        <rosparam param="radius">0.25</rosparam>
     </node>
 
     <machine name="turtlebot" user="ubuntu" address="$(arg robot)" env-loader="/home/ubuntu/loader.sh" default="true"/>
@@ -28,6 +28,6 @@
     </include>
 
     <node machine="turtlebot" name="turtle_interface" pkg="nuturtle_robot" type="nuturtle_robot_turtle_interface" />
-    <node machine="turtlebot" name="odometer" pkg="rigid2d" type="rigid2d_odometer" output="screen"/>
+    <node machine="turtlebot" name="odometer" pkg="rigid2d" type="rigid2d_odometer" />
 
 </launch>
