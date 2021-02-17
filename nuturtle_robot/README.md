@@ -1,7 +1,3 @@
-<script type="text/javascript" id="MathJax-script" async
-    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
-</script>
-
 # nuturtle_robot
 * A package that provides an interface for hardware on the Turtlebot. Converts body twists to wheel commands and calculates joint states using encoders.
 * Author: Arun Kumar
@@ -16,7 +12,7 @@ roslaunch nuturtle_robot odom_teleop.launch
 * Record odometry:
     * x = 0.0302
     * y = 0.0165
-    * $\theta$ = 0.000600 rad
+    * θ = 0.000600 rad
 <insert gif>
 
 ## Experiment 2
@@ -25,7 +21,7 @@ roslaunch nuturtle_robot odom_teleop.launch
 * Record odometry:
     * x = 0.0000445
     * y = -0.0000181
-    * $\theta$ = 0.180 rad
+    * θ = 0.180 rad
 <insert gif>
 
 ## Experiment 3
@@ -34,7 +30,7 @@ roslaunch nuturtle_robot odom_teleop.launch
 * Record odometry:
     * x = -0.0290
     * y = 0.0633
-    * $\theta$ = 0.398 rad
+    * θ = 0.398 rad
 <insert gif>
 
 ## Experiment 4
@@ -46,5 +42,5 @@ roslaunch nuturtle_robot odom_teleop.launch
 * Record odometry:
     * x = -0.282
     * y = 0.205
-    * $\theta$ = 1.74 rad
+    * θ = 1.74 rad
 <insert gif>
