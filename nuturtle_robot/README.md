@@ -1,3 +1,7 @@
+<script type="text/javascript" id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+
 # nuturtle_robot
 * A package that provides an interface for hardware on the Turtlebot. Converts body twists to wheel commands and calculates joint states using encoders.
 * Author: Arun Kumar
