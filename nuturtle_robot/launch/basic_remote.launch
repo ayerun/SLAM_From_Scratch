@@ -1,5 +1,5 @@
 <launch>
-    <arg name="robot" default="apollo.local"/>
+    <arg name="robot" default="apollo.local" doc="robot address"/>
 
     <machine name="turtlebot" user="ubuntu" address="$(arg robot)" env-loader="/home/ubuntu/loader.sh" default="true"/>
 

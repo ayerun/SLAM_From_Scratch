@@ -1,6 +1,6 @@
 <launch>
-    <arg name="robot" default="apollo.local"/>
-    <arg name="circle" default="false" />
+    <arg name="robot" default="apollo.local" doc="robot address"/>
+    <arg name="circle" default="false" doc="launch follow_circle node"/>
 
     <rosparam param="wheel_base">0.16</rosparam>
     <rosparam param="wheel_radius">0.033</rosparam>
