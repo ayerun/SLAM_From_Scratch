@@ -13,7 +13,9 @@ roslaunch nuturtle_robot odom_teleop.launch
     * x = 0.0302
     * y = 0.0165
     * θ = 0.000600 rad
-<insert gif>
+![Experiment1](gif/experiment1.gif)
+![Screencast1](gif/screen1.gif)
+Note: Gif only shows portion of experiment
 
 ## Experiment 2
 * Rotate robot in place clockwise and counter clockwise (pure rotation)
@@ -22,7 +24,9 @@ roslaunch nuturtle_robot odom_teleop.launch
     * x = 0.0000445
     * y = -0.0000181
     * θ = 0.180 rad
-<insert gif>
+![Experiment2](gif/experiment2.gif)
+![Screencast2](gif/screen2.gif)
+Note: Gif only shows portion of experiment
 
 ## Experiment 3
 * Drive robot in circle clockwise and counter clockwise (translation plus rotation)
