@@ -2,7 +2,7 @@
 <package format="2">
   <name>rigid2d</name>
   <version>1.0.0</version>
-  <description>The rigid2d package</description>
+  <description>Provides a library for 2D transformations and differential drive dead reckoning.</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

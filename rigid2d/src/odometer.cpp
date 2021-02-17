@@ -1,5 +1,5 @@
 /// \file
-/// \brief 
+/// \brief Calculates and publishes odometry using joint states. Broadcasts transform from turtlebot to odom frame.
 ///
 /// PARAMETERS:
 ///     wheel_base (double): distance between diff drive wheels
@@ -9,13 +9,13 @@
 ///     odom_frame_id (string): name of odom frame
 ///     body_frame_id (string): name of body frame
 /// PUBLISHES:
-///     odom (nav_msgs/Odometry): Apollo odometry
+///     odom (nav_msgs/Odometry): robot odometry
 /// SUBSCRIBES:
-///     /joint_states (sensor_msgs/JointState)
+///     /joint_states (sensor_msgs/JointState): wheel joint state values
 /// BROADCASTS:
 ///     transfrom from /odom to /base_footprint
 /// SERVICES:
-///     
+///     set_pose: sets the location and orientation of the robot to a user specified configuration
 
 #include <ros/ros.h>
 #include <rigid2d/rigid2d.hpp>

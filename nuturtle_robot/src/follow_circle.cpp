@@ -1,3 +1,16 @@
+/// \file
+/// \brief makes turtle follow circle of specified radius and speed
+///
+/// PARAMETERS:
+///     /follow_circle/radius (double): circle radius
+///     /follow_circle/speed (double): turtlebot speed
+/// PUBLISHES:
+///     /cmd_vel (geometry_msgs/Twist): movement commands for turtlebot
+/// SUBSCRIBES:
+///     
+/// SERVICES:
+///     control: controls direction of rotation and allows for pausing
+
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
 #include <nuturtle_robot/control.h>
@@ -8,12 +21,19 @@ static double rad;
 static geometry_msgs::Twist cmd;
 static int frequency = 200;
 
-
+/// \brief publishing function
 void follow_circle()
 {
     pub.publish(cmd);
 }
 
+/// \brief rosservice to control direction of rotation and pause functionality
+/// \param req - service request
+///              clockwise (bool): direction of rotation
+///              stop (bool): pause functionality
+/// \param resp - service response 
+///               final (string): update to user
+/// \return true when callback complete
 bool controlCallback(nuturtle_robot::control::Request &req, nuturtle_robot::control::Response &res)
 {
     if(req.clockwise)

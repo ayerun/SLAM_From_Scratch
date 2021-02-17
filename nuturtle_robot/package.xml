@@ -2,7 +2,7 @@
 <package format="2">
   <name>nuturtle_robot</name>
   <version>0.0.0</version>
-  <description>The nuturtle_robot package</description>
+  <description>Provides an interface for hardware on the Turtlebot. Converts body twists to wheel commands and calculates joint states using encoders.</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

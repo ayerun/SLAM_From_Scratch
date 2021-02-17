@@ -1,3 +1,20 @@
+/// \file
+/// \brief Converts body twists to wheel commands and calculates joint states using encoders.
+///
+/// PARAMETERS:
+///     wheel_base (double): distance between diff drive wheels
+///     wheel_radius (double): wheel radius
+///     left_wheel_joint (string): name of left wheel joint
+///     right_wheel_joint (string): name of right wheel joint
+/// PUBLISHES:
+///     /wheel_cmd (nuturtlebot/WheelCommands): wheel commands for turtlebot
+///     /joint_states (sensor_msgs/JointState): wheel joint state values
+/// SUBSCRIBES:
+///     /cmd_vel (geometry_msgs/Twist): commanded body velocity
+///     /sensor_data (nuturtlebot/SensorData): sensor data from Turtlebot
+/// SERVICES:
+///     
+
 #include <ros/ros.h>
 #include <rigid2d/rigid2d.hpp>
 #include <rigid2d/diff_drive.hpp>
@@ -12,8 +29,8 @@ static ros::Publisher controls_pub;
 static ros::Subscriber sensor_sub;
 static ros::Publisher joint_pub;
 static sensor_msgs::JointState js;
-static std::string left_wheel_joint;    //name of left wheel joint
-static std::string right_wheel_joint;   //name of right wheel joint
+static std::string left_wheel_joint;   
+static std::string right_wheel_joint;   
 static nuturtlebot::SensorData data_new;
 static nuturtlebot::SensorData data_old;
 static nuturtlebot::SensorData data_first;
@@ -26,6 +43,8 @@ static double mapping_constant;
 static int frequency = 200;
 static bool first = true;
 
+/// \brief subscriber callback for twist messages
+/// \param twis - incoming twist message
 void cmdCallback(const geometry_msgs::TwistConstPtr &twis)
 {
     rigid2d::Twist2D Vb;
@@ -44,6 +63,8 @@ void cmdCallback(const geometry_msgs::TwistConstPtr &twis)
     controls_pub.publish(controls_msg);
 }
 
+/// \brief subscriber callback for sensor messages
+/// \param data - incoming sensor data
 void sensorCallback(const nuturtlebot::SensorDataConstPtr &data)
 {
     rigid2d::Vector2D angs;
@@ -84,9 +105,11 @@ void sensorCallback(const nuturtlebot::SensorDataConstPtr &data)
 
 int main(int argc, char** argv)
 {
+    //initialize node
     ros::init(argc,argv,"apollo_interface");
     ros::NodeHandle nh;
 
+    //initialize publishers and subscribers
     cmd_sub = nh.subscribe("/cmd_vel", 10, cmdCallback);
     sensor_sub = nh.subscribe("/sensor_data", 10, sensorCallback);
     controls_pub = nh.advertise<nuturtlebot::WheelCommands>("/wheel_cmd", 10);
@@ -102,6 +125,7 @@ int main(int argc, char** argv)
     dd = rigid2d::DiffDrive(base,radius);
     mapping_constant = 0.22/radius;
 
+    //initialize joint state message
     js.name.push_back(left_wheel_joint);
     js.name.push_back(right_wheel_joint);
     js.position.push_back(0);
