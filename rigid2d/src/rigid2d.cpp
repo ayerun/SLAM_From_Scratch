@@ -397,12 +397,12 @@ namespace rigid2d
             Transform2D Tbs;
             Transform2D Tb_s_;
 
-            bs.x = -twist.x_dot/twist.w;
-            bs.y = twist.y_dot/twist.w;
+            bs.y = -twist.x_dot/twist.w;
+            bs.x = twist.y_dot/twist.w;
             Tbs = Transform2D(bs);
             Tss_ = Transform2D(twist.w);
             Tb_s_ = Transform2D(bs);
-            Tbb_ = Tbs*Tss_*(Tb_s_.inv());
+            Tbb_ = Tbs.inv()*Tss_*(Tb_s_);  //fixed error in lecture
         }
 
         return Tbb_;
