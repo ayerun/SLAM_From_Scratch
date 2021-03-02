@@ -7,10 +7,8 @@
     <!-- simulation -->
     <group if="$(eval arg('robot') == 'localhost')" >
         <node name="tube_world" pkg="nurtlesim" type="nurtlesim_tube_world" />
-        <include file="$(find nuturtle_description)/launch/load.launch" >
-            <arg name="use_sim" value="true"/>
-            <arg name="use_rviz" value="false"/>
-        </include>
+        <include file="$(find nuturtle_description)/launch/load.launch" />
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find nuslam)/config/slam.rviz" />
     </group>
 
     <!-- parameters for nodes -->

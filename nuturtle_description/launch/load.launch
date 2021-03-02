@@ -1,8 +1,6 @@
 
 <launch>
-  <arg name="use_myOdom" default="false" doc='launches rviz with odometry' />
-  <arg name="use_rviz" default="true" doc='launches rviz and joint_state_publisher'/>
-  <arg name="use_sim" default="false" doc='launches rviz for simulation' />
+  <arg name="use_rviz" default="false" doc='launches rviz and joint_state_publisher'/>
   <arg name="multi_robot_name" default="" doc='sets tf_prefix if launching multiple robots'/>
 
   <rosparam file='$(find nuturtle_description)/config/diff_params.yaml' />
@@ -22,8 +20,4 @@
 
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find nuturtle_description)/config/model.rviz"/>
   </group>
-
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rigid2d)/config/odom.rviz" if="$(arg use_myOdom)"/>
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find nurtlesim)/config/sim.rviz" if="$(arg use_sim)"/>
-
 </launch>

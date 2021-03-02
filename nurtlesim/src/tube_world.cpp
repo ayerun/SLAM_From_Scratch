@@ -203,9 +203,6 @@ void pubPath()
 
     path.poses.push_back(ps);
     path_pub.publish(path);
-
-
-
 }
 
 /// \brief broadcast transform from world to turtle

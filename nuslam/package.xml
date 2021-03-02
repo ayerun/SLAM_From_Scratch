@@ -57,6 +57,7 @@
   <exec_depend>nuturtle_description</exec_depend>
   <exec_depend>rigid2d</exec_depend>
   <exec_depend>roscpp</exec_depend>
+  <exec_depend>rviz</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
   <exec_depend>turtlebot3_teleop</exec_depend>
 

@@ -25,15 +25,16 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <nav_msgs/Odometry.h>
+#include <nav_msgs/Path.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/transform_broadcaster.h>
-#include <tf2_ros/static_transform_broadcaster.h>
 #include <rigid2d/set_pose.h>
 
 //global variables
 static ros::Subscriber js_sub;                  //joint state subscriber
 static ros::Publisher pub;                      //odometry publisher
+static ros::Publisher path_odom_pub;            //path odometery publisher
 static std::string odom_frame_id;               //odometry frame name
 static std::string body_frame_id;               //body frame name
 static std::string left_wheel_joint;            //left wheel joint name
@@ -41,7 +42,7 @@ static std::string right_wheel_joint;           //right wheel joint name
 static sensor_msgs::JointState js_new;          //incoming joint state message
 static sensor_msgs::JointState js_old;          //previous joint state message
 static nav_msgs::Odometry odom;                 //odometry messgae
-static geometry_msgs::Quaternion g_rot;         //geometry messages quaternion
+static nav_msgs::Path path;                     //odom path message
 static geometry_msgs::TransformStamped trans;   //transform stamped message
 static tf2::Quaternion rot;                     //tf2 quaternion
 static rigid2d::Vector2D angs;                  //wheel angles
@@ -76,6 +77,8 @@ void jsCallback(const sensor_msgs::JointStateConstPtr &js_msg)
 /// \brief oublish odometry
 void publishOdom()
 {
+    tf2::Quaternion rot;
+
     //time
     odom.header.stamp = ros::Time::now();
 
@@ -90,17 +93,45 @@ void publishOdom()
 
     //orientation
     rot.setRPY(0,0,dd.getTransform().getTheta());
-    g_rot = tf2::toMsg(rot);
-    odom.pose.pose.orientation = g_rot;
+    odom.pose.pose.orientation = tf2::toMsg(rot);
 
     //publish
     pub.publish(odom);
 }
 
+/// \brief publishes path messages of actual robot path
+void publishOdomPath()
+{
+    static nav_msgs::Path path;
+    geometry_msgs::PoseStamped ps;
+    std_msgs::Header head;
+    tf2::Quaternion rot;
+
+    //header
+    head.stamp = ros::Time::now();
+    head.frame_id = "world";
+    ps.header = head;
+    path.header = head;
+    
+    //position
+    ps.pose.position.x = dd.getTransform().getX();
+    ps.pose.position.y = dd.getTransform().getY();
+    ps.pose.position.z = 0;
+
+    //orientation
+    rot.setRPY(0,0,dd.getTransform().getTheta());
+    ps.pose.orientation = tf2::toMsg(rot);
+
+    path.poses.push_back(ps);
+    path_odom_pub.publish(path);
+}
+
+
 /// \brief broadcast transform from odom to base_footprint
 void broadcast()
 {
     static tf2_ros::TransformBroadcaster br;
+    tf2::Quaternion rot;
     
     //time
     trans.header.stamp = ros::Time::now();
@@ -111,7 +142,8 @@ void broadcast()
     trans.transform.translation.z = 0;
 
     //orientation
-    trans.transform.rotation = g_rot;
+    rot.setRPY(0,0,dd.getTransform().getTheta());
+    trans.transform.rotation = tf2::toMsg(rot);
 
     //broadcast
     br.sendTransform(trans);
@@ -130,6 +162,7 @@ int main(int argc, char** argv)
     //initialize subscribers and publishers
     js_sub = nh.subscribe("joint_states", 10, jsCallback);
     pub = nh.advertise<nav_msgs::Odometry>("odom", 10);
+    path_odom_pub = nh.advertise<nav_msgs::Path>("odom_path", 10);
 
     //get parameters
     ros::param::get("/odom_frame_id", odom_frame_id);
@@ -158,12 +191,16 @@ int main(int argc, char** argv)
     trans.header.frame_id = odom_frame_id;
     trans.child_frame_id = body_frame_id;
 
+    //initialize path msg
+    path.header.frame_id = "world";
+
     ros::Rate r(frequency); //looping rate
 
     while(ros::ok())
     {
         ros::spinOnce();
         publishOdom();
+        publishOdomPath();
         broadcast();
         r.sleep();
     }

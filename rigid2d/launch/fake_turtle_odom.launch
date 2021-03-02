@@ -1,10 +1,8 @@
 <launch>
 
     <!-- visualize apollo -->
-    <include file="$(find nuturtle_description)/launch/load.launch" >
-        <arg name="use_myOdom" value="true"/>
-        <arg name="use_rviz" value="false"/>
-    </include>
+    <include file="$(find nuturtle_description)/launch/load.launch" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rigid2d)/config/odom.rviz"/>
 
     <!-- launch nodes -->
     <node name="teleop" pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" />
