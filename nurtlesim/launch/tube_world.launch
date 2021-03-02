@@ -2,7 +2,7 @@
 
     <!-- visualize apollo -->
     <include file="$(find nuturtle_description)/launch/load.launch" >
-        <arg name="use_myOdom" value="true"/>
+        <arg name="use_sim" value="true"/>
         <arg name="use_rviz" value="false"/>
     </include>
 
@@ -20,7 +20,9 @@
     <rosparam param="body_frame_id">base_footprint</rosparam>
     <rosparam param="x_variance">0.01</rosparam>
     <rosparam param="w_variance">0.01</rosparam>
-    <rosparam param="slip_min">0.95</rosparam>
-    <rosparam param="slip_max">1.05</rosparam>
+    <rosparam param="slip_min">0</rosparam>
+    <rosparam param="slip_max">2</rosparam>
+    
+    <rosparam file="$(find nurtlesim)/config/simulation_params.yaml"/>
 
 </launch>

@@ -8,7 +8,8 @@
 ///     right_wheel_joint (string): name of right wheel joint
 ///     x_variance (double): variance for x_dot noise
 ///     w_variance (double): variance for w noise
-///     wheel_variance (double): variance for wheel slip
+///     slip_min (double): minimum wheel slip
+///     slip_max (double): maximum for wheel slip
 /// PUBLISHES:
 ///     joint_states (sensor_msgs/JointState): Apollo wheel joint state values
 /// SUBSCRIBES:
@@ -20,12 +21,23 @@
 #include <rigid2d/rigid2d.hpp>
 #include <rigid2d/diff_drive.hpp>
 #include <sensor_msgs/JointState.h>
+#include <visualization_msgs/MarkerArray.h>
+#include <visualization_msgs/Marker.h>
+#include <std_msgs/ColorRGBA.h>
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/Point.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/transform_broadcaster.h>
 #include <random>
 
 //global variables
 static ros::Publisher pub;              //publisher
-static sensor_msgs::JointState js;      //JointState message
+static ros::Publisher marker_pub;
+static sensor_msgs::JointState js;      //JointState message without slip
+static sensor_msgs::JointState js_new;  //JointState message with slip
+static sensor_msgs::JointState js_old;  //previous JointState message with slip
 static rigid2d::DiffDrive dd;           //differential drive object
 static double base;                     //wheel separation
 static double radius;                   //wheel radius
@@ -33,6 +45,8 @@ static const int frequency = 200;       //publishing frequency
 static std::normal_distribution<> wheel_noise;
 static std::normal_distribution<> x_noise;
 static std::normal_distribution<> w_noise;
+static std::vector<double> tube_coordinates_x;
+static std::vector<double> tube_coordinates_y;
 
 
 /// \brief random number generator
@@ -47,18 +61,33 @@ std::mt19937 & get_random()
     return mt;
 }
 
+/// \brief track actual robot location
+void odometry()
+{
+    rigid2d::Vector2D angs;
+
+    //find change in wheel angles
+    angs.x = js_new.position[0]-js_old.position[0];
+    angs.y = js_new.position[1]-js_old.position[1];
+    
+    dd.updateConfiguration(angs);
+
+    js_old = js_new;
+}
+
 /// \brief subscriber callback that converts twist message to wheel controls
 /// \param twist - commanded body velocity
 void velCallback(const geometry_msgs::TwistConstPtr &twist)
 {
+    if (twist->angular.z == 0 && twist->linear.x == 0)
+    {
+        return;
+    }
+    
     rigid2d::Twist2D Vb;
-    // geometry_msgs::Twist cmd;
     rigid2d::Vector2D controls;
 
-    //get twist
-    // cmd = *twist;
-
-    //convert to Twist2D
+    //convert to Twist2D and add noise
     Vb.w = twist->angular.z+w_noise(get_random());
     Vb.x_dot = twist->linear.x+x_noise(get_random());
     Vb.y_dot = twist->linear.y;
@@ -66,17 +95,21 @@ void velCallback(const geometry_msgs::TwistConstPtr &twist)
     //calculate wheel controls
     controls = dd.calculateControls(Vb);
 
-    //add noise to wheel controls
-    controls*=wheel_noise(get_random());
-
-    //store controls in JointState message and add noise
+    //store controls in JointState message
     js.velocity[0] = controls.x;
     js.velocity[1] = controls.y;
     js.position[0] += controls.x/frequency;
     js.position[1] += controls.y/frequency;
 
-    //tack apollo configuration
-    dd.updateConfiguration(controls);
+    //add noise to wheel controls
+    controls*=wheel_noise(get_random());
+    js_new.velocity[0] = controls.x;
+    js_new.velocity[1] = controls.y;
+    js_new.position[0] += controls.x/frequency;
+    js_new.position[1] += controls.y/frequency;
+
+    //tack actual apollo configuration
+    odometry();
 }
 
 /// \brief publishes JointState Message
@@ -84,6 +117,83 @@ void publishJS()
 {
     js.header.stamp = ros::Time::now();
     pub.publish(js);
+}
+
+void setTubes()
+{
+    visualization_msgs::MarkerArray tubes;
+
+    //cylinder orientation
+    geometry_msgs::Quaternion rot;
+    rot.x = 0;
+    rot.y = 0;
+    rot.z = 0;
+    rot.w = 1;
+
+    //marker color
+    std_msgs::ColorRGBA col;
+    col.r = 1;
+    col.g = 1;
+    col.b = 0;
+    col.a = 1;
+
+    for(int i = 0; i<tube_coordinates_x.size(); i++)
+    {
+        visualization_msgs::Marker tube;
+        geometry_msgs::Point pos;
+        
+
+        //set shape and color
+        tube.type = tube.CYLINDER;
+        tube.color = col;
+
+        //set pose
+        pos.x = tube_coordinates_x[i];
+        pos.y = tube_coordinates_y[i];
+        pos.z = 0;
+        tube.pose.position = pos;
+        tube.pose.orientation = rot;
+
+        //set scale
+        tube.scale.x = 0.1;
+        tube.scale.y = 0.1;
+        tube.scale.z = 0.1;
+
+        tube.ns = "real";
+        tube.header.frame_id = "odom";
+        tube.header.stamp = ros::Time::now();
+        tube.id = i;
+
+        tubes.markers.push_back(tube);
+    }
+    marker_pub.publish(tubes);
+}
+
+/// \brief broadcast transform from world to turtle
+void broadcast()
+{
+    static tf2_ros::TransformBroadcaster br;
+    geometry_msgs::Quaternion g_rot;         //geometry messages quaternion
+    tf2::Quaternion rot;                     //tf2 quaternion
+    geometry_msgs::TransformStamped trans;   //transform stamped message
+    
+    //time
+    trans.child_frame_id = "turtle";
+    trans.header.frame_id = "world";
+    trans.header.stamp = ros::Time::now();
+
+    //position
+    trans.transform.translation.x = dd.getTransform().getX();
+    trans.transform.translation.y = dd.getTransform().getY();
+    trans.transform.translation.z = 0;
+
+    //orientation
+    rot.setRPY(0,0,dd.getTransform().getTheta());
+    g_rot = tf2::toMsg(rot);
+    trans.transform.rotation = g_rot;
+
+    //broadcast
+    br.sendTransform(trans);
 }
 
 /// \brief initializes node, subscriber, publisher, parameters, and objects
@@ -99,6 +209,7 @@ int main(int argc, char** argv)
     //initialize publishers and subscribers
     pub = nh.advertise<sensor_msgs::JointState>("joint_states", 10);
     const ros::Subscriber vel_sub = nh.subscribe("cmd_vel", 10, velCallback);
+    marker_pub = nh.advertise<visualization_msgs::MarkerArray>("tube_locations", 10, true);
 
     //get parameters
     double x_var;
@@ -106,6 +217,7 @@ int main(int argc, char** argv)
     double slip_min;
     double slip_max;
     double wheel_var;
+    double tube_radius;
     std::string left_wheel_joint;    //name of left wheel joint
     std::string right_wheel_joint;   //name of right wheel joint
     ros::param::get("/wheel_base", base);
@@ -116,6 +228,9 @@ int main(int argc, char** argv)
     ros::param::get("/w_variance", w_var);
     ros::param::get("/slip_min", slip_min);
     ros::param::get("/slip_max", slip_max);
+    ros::param::get("/tube_radius", tube_radius);
+    ros::param::get("/tube_coordinates_x", tube_coordinates_x);
+    ros::param::get("/tube_coordinates_y", tube_coordinates_y);
 
     // initialize noise distributions
     wheel_var = (slip_min+slip_max)/2;
@@ -136,12 +251,27 @@ int main(int argc, char** argv)
     js.position.push_back(0);
     js.velocity.push_back(0);
     js.velocity.push_back(0);
+    js_old.name.push_back(left_wheel_joint);
+    js_old.name.push_back(right_wheel_joint);
+    js_old.position.push_back(0);
+    js_old.position.push_back(0);
+    js_old.velocity.push_back(0);
+    js_old.velocity.push_back(0);
+    js_new.name.push_back(left_wheel_joint);
+    js_new.name.push_back(right_wheel_joint);
+    js_new.position.push_back(0);
+    js_new.position.push_back(0);
+    js_new.velocity.push_back(0);
+    js_new.velocity.push_back(0);
+
+    setTubes();
 
     ros::Rate r(frequency);           //looping rate
     
     while(ros::ok())
     {
         publishJS();
+        broadcast();
         ros::spinOnce();
         r.sleep();
     }

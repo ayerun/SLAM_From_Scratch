@@ -14,6 +14,7 @@ Panels:
         - /Odometry1
         - /Odometry1/Shape1
         - /Odometry1/Covariance1
+        - /MarkerArray1
       Splitter Ratio: 0.6029411554336548
     Tree Height: 752
   - Class: rviz/Selection
@@ -224,6 +225,14 @@ Visualization Manager:
         Value: Arrow
       Topic: /odom
       Unreliable: false
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /tube_locations
+      Name: MarkerArray
+      Namespaces:
+        real: true
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
