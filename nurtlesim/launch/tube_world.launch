@@ -20,6 +20,7 @@
     <rosparam param="body_frame_id">base_footprint</rosparam>
     <rosparam param="x_variance">0.01</rosparam>
     <rosparam param="w_variance">0.01</rosparam>
-    <rosparam param="wheel_variance">0.01</rosparam>
+    <rosparam param="slip_min">0.95</rosparam>
+    <rosparam param="slip_max">1.05</rosparam>
 
 </launch>
