@@ -218,7 +218,7 @@ void broadcast()
     
     //time
     trans.child_frame_id = "turtle";
-    trans.header.frame_id = odom_frame_id;
+    trans.header.frame_id = "world";
     trans.header.stamp = ros::Time::now();
 
     //position

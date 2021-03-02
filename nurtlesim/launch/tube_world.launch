@@ -22,7 +22,6 @@
     <rosparam param="w_variance">0.01</rosparam>
     <rosparam param="slip_min">0</rosparam>
     <rosparam param="slip_max">2</rosparam>
-    
     <rosparam file="$(find nurtlesim)/config/simulation_params.yaml"/>
 
 </launch>
