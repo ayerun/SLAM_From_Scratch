@@ -16,7 +16,7 @@
     <rosparam param="wheel_radius">0.033</rosparam>
     <rosparam param="left_wheel_joint">wheel_left_joint</rosparam>
     <rosparam param="right_wheel_joint">wheel_right_joint</rosparam>
-    <rosparam param="odom_frame_id">odom</rosparam>
+    <rosparam param="odom_frame_id">world</rosparam>
     <rosparam param="body_frame_id">base_footprint</rosparam>
     <rosparam param="x_variance">0.01</rosparam>
     <rosparam param="w_variance">0.01</rosparam>
