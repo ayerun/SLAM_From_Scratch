@@ -95,7 +95,7 @@ void velCallback(const geometry_msgs::TwistConstPtr &twist)
     rigid2d::Twist2D Vb;
     rigid2d::Vector2D controls;
 
-    //convert to Twist2D and add noise
+    //convert to Twist2D
     Vb.w = twist->angular.z+w_noise(get_random());
     Vb.x_dot = twist->linear.x+x_noise(get_random());
     Vb.y_dot = twist->linear.y;
@@ -109,8 +109,15 @@ void velCallback(const geometry_msgs::TwistConstPtr &twist)
     js.position[0] += controls.x/frequency;
     js.position[1] += controls.y/frequency;
 
-    //add noise to wheel controls
-    controls*=wheel_noise(get_random());
+    //add controls noise
+    Vb.w += w_noise(get_random());
+    Vb.x_dot += x_noise(get_random());
+
+    //calculate wheel controls and add slip
+    controls = dd.calculateControls(Vb);
+    controls *= wheel_noise(get_random());
+
+    //store noisy controls in JointState message
     js_new.velocity[0] = controls.x;
     js_new.velocity[1] = controls.y;
     js_new.position[0] += controls.x/frequency;
@@ -120,7 +127,7 @@ void velCallback(const geometry_msgs::TwistConstPtr &twist)
     odometry();
 }
 
-/// \brief publishes JointState Message
+/// \brief publishes JointState Message without noise
 void publishJS()
 {
     js.header.stamp = ros::Time::now();
@@ -146,6 +153,7 @@ void setTubes()
     col.b = 0;
     col.a = 1;
 
+    //loop through all tubes an append marker messages to array
     for(int i = 0; i<tube_coordinates_x.size(); i++)
     {
         visualization_msgs::Marker tube;
