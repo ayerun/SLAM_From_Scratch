@@ -1,7 +1,9 @@
-#ifdef RIGID2D_INCLUDE_GUARD_HPP
-
+#ifndef DIFFDRIVE_INCLUDE_GUARD_HPP
+#define DIFFDRIVE_INCLUDE_GUARD_HPP
 /// \file
 /// \brief Library for differential drive kinematics
+
+#include <rigid2d/rigid2d.hpp>
 
 namespace rigid2d
 {

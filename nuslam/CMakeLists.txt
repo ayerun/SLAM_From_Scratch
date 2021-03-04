@@ -201,6 +201,14 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## Testing ##
 #############
 
+catch_add_test(${PROJECT_NAME}_test
+	test/test.cpp
+)
+target_link_libraries(${PROJECT_NAME}_test
+	${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+)
+
 ## Add gtest based cpp test target and link libraries
 # catkin_add_gtest(${PROJECT_NAME}-test test/test_nuslam.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
