@@ -104,3 +104,17 @@ TEST_CASE("calculate Qbar","[calculateQbar]"){ // Arun, Kumar
         }
     }
 }
+
+TEST_CASE("predict Uncertainty test","[predictUncertainty]"){ // Arun, Kumar
+    //not a great test
+    int n = 2;
+    nuslam::ekf filter = nuslam::ekf(n);
+    rigid2d::Twist2D ut;
+    ut.w = rigid2d::PI;
+    ut.x_dot = 2;
+
+    arma::mat sigma_estimate = filter.predictUncertainty(ut);
+    arma::mat test_mat = arma::mat(2*n+3,2*n+3,arma::fill::zeros);
+
+    REQUIRE(arma::size(sigma_estimate)==arma::size(test_mat));
+}

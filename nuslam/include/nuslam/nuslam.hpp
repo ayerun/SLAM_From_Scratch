@@ -3,11 +3,8 @@
 
 #ifndef NUSLAM_INCLUDE_GUARD_HPP
 #define NUSLAM_INCLUDE_GUARD_HPP
-
 #include <armadillo>
-#include <cmath>
 #include <rigid2d/rigid2d.hpp>
-#include <rigid2d/diff_drive.hpp>
 
 namespace nuslam
 {
@@ -30,22 +27,37 @@ namespace nuslam
 
         /// \brief calculates A matrix (derivative of model without noise with respect to state)
         /// \param ut - twist
+        /// \returns A matrix
         arma::mat calculateA(rigid2d::Twist2D ut);
 
         /// \brief calculates Q bar matrix (process noise for robot motion model, expanding to fill the whole state)
+        /// \returns Q bar matrix
         arma::mat calculateQbar();
 
-        /// \brief
-        arma::mat predictUncertainty(arma::mat A, arma::mat Q_bar);
+        /// \brief propogates uncertainty using the linearized state transition model
+        /// \param ut - twist
+        /// \returns estimated sigma
+        arma::mat predictUncertainty(rigid2d::Twist2D ut);
 
-        /// \brief
+        /// \brief accessor function
+        /// \returns n
         int getN();
 
-        /// \brief
+        /// \brief accessor function
+        /// \returns sigma
         arma::mat getSigma();
 
-        /// \brief
+        /// \brief accessor function
+        /// \returns state
         arma::mat getState();
+
+        /// \brief accessor function
+        /// \returns Q
+        arma::mat getQ();
+
+        /// \brief accessor function
+        /// \returns R
+        arma::mat getR();
         
 
 

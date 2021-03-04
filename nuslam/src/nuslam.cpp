@@ -11,9 +11,9 @@ namespace nuslam
         arma::mat sig2n3 = arma::mat(2*n,3,arma::fill::zeros);
         arma::mat sig32n = arma::mat(3,2*n,arma::fill::zeros);
         arma::mat sig0m = 999999*arma::mat(2*n,2*n,arma::fill::eye);
-        auto joined_ab  = std::move(arma::join_cols(sig0q,sig2n3));
-        auto joined_cd  = std::move(arma::join_cols(sig32n,sig0m));
-        sigma = std::move(arma::join_rows(joined_ab,joined_cd));
+        auto joined_ab  = arma::join_cols(sig0q,sig2n3);
+        auto joined_cd  = arma::join_cols(sig32n,sig0m);
+        sigma = arma::join_rows(joined_ab,joined_cd);
 
         //state
         state = arma::mat(2*n+3,1,arma::fill::zeros);
@@ -36,9 +36,9 @@ namespace nuslam
         arma::mat sig2n3 = arma::mat(2*n,3,arma::fill::zeros);
         arma::mat sig32n = arma::mat(3,2*n,arma::fill::zeros);
         arma::mat sig0m = 999999*arma::mat(2*n,2*n,arma::fill::eye);
-        auto joined_ab  = std::move(arma::join_cols(sig0q,sig2n3));
-        auto joined_cd  = std::move(arma::join_cols(sig32n,sig0m));
-        sigma = std::move(arma::join_rows(joined_ab,joined_cd));
+        auto joined_ab  = arma::join_cols(sig0q,sig2n3);
+        auto joined_cd  = arma::join_cols(sig32n,sig0m);
+        sigma = arma::join_rows(joined_ab,joined_cd);
 
         //state
         state = arma::mat(2*n+3,1,arma::fill::zeros);
@@ -61,9 +61,9 @@ namespace nuslam
         arma::mat sig2n3 = arma::mat(2*n,3,arma::fill::zeros);
         arma::mat sig32n = arma::mat(3,2*n,arma::fill::zeros);
         arma::mat sig0m = 999999*arma::mat(2*n,2*n,arma::fill::eye);
-        auto joined_ab  = std::move(arma::join_cols(sig0q,sig2n3));
-        auto joined_cd  = std::move(arma::join_cols(sig32n,sig0m));
-        sigma = std::move(arma::join_rows(joined_ab,joined_cd));
+        auto joined_ab  = arma::join_cols(sig0q,sig2n3);
+        auto joined_cd  = arma::join_cols(sig32n,sig0m);
+        sigma = arma::join_rows(joined_ab,joined_cd);
 
         //state
         state = arma::mat(2*n+3,1,arma::fill::zeros);
@@ -85,9 +85,9 @@ namespace nuslam
             arma::mat b = arma::mat(3,2*n,arma::fill::zeros);
             arma::mat c = arma::mat(2*n,3,arma::fill::zeros);
             arma::mat d = arma::mat(2*n,2*n,arma::fill::zeros);
-            auto joined_ab  = std::move(arma::join_rows(a,b));
-            auto joined_cd  = std::move(arma::join_rows(c,d));
-            A = std::move(arma::join_cols(joined_ab,joined_cd))+I;
+            auto joined_ab  = arma::join_rows(a,b);
+            auto joined_cd  = arma::join_rows(c,d);
+            A = arma::join_cols(joined_ab,joined_cd)+I;
         }
         else
         {
@@ -98,9 +98,9 @@ namespace nuslam
             arma::mat b = arma::mat(3,2*n,arma::fill::zeros);
             arma::mat c = arma::mat(2*n,3,arma::fill::zeros);
             arma::mat d = arma::mat(2*n,2*n,arma::fill::zeros);
-            auto joined_ab  = std::move(arma::join_rows(a,b));
-            auto joined_cd  = std::move(arma::join_rows(c,d));
-            A = std::move(arma::join_cols(joined_ab,joined_cd))+I;
+            auto joined_ab  = arma::join_rows(a,b);
+            auto joined_cd  = arma::join_rows(c,d);
+            A = arma::join_cols(joined_ab,joined_cd)+I;
         }
         return A;
     }
@@ -110,17 +110,20 @@ namespace nuslam
         arma::mat b = arma::mat(3,2*n,arma::fill::zeros);
         arma::mat c = arma::mat(2*n,3,arma::fill::zeros);
         arma::mat d = arma::mat(2*n,2*n,arma::fill::zeros);
-        auto joined_ab  = std::move(arma::join_rows(Q,b));
-        auto joined_cd  = std::move(arma::join_rows(c,d));
-        arma::mat Q_bar = std::move(arma::join_cols(joined_ab,joined_cd));
+        auto joined_ab  = arma::join_rows(Q,b);
+        auto joined_cd  = arma::join_rows(c,d);
+        arma::mat Q_bar = arma::join_cols(joined_ab,joined_cd);
         return Q_bar;
     }
 
-    // arma::mat predictUncertainty(arma::mat A, arma::mat Q_bar)
-    // {
+    arma::mat ekf::predictUncertainty(rigid2d::Twist2D ut)
+    {
+        arma::mat A = this->calculateA(ut);
+        arma::mat Qbar = this->calculateQbar();
+        arma::mat sigma_estimate = A*sigma*A.t()+Qbar;
 
-    //     return;
-    // }
+        return sigma_estimate;
+    }
 
     int ekf::getN()
     {
@@ -135,5 +138,15 @@ namespace nuslam
     arma::mat ekf::getState()
     {
         return state;
+    }
+
+    arma::mat ekf::getQ()
+    {
+        return Q;
+    }
+
+    arma::mat ekf::getR()
+    {
+        return R;
     }
 }
