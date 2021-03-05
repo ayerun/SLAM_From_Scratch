@@ -48,6 +48,7 @@ static sensor_msgs::JointState js_old;          //previous JointState message wi
 static rigid2d::DiffDrive dd;                   //differential drive object
 static double base;                             //wheel separation
 static double radius;                           //wheel radius
+static double max_distance;
 static const int frequency = 200;               //publishing frequency
 static std::normal_distribution<> wheel_noise;  //simulate slip
 static std::normal_distribution<> x_noise;      //simulate encoder noise
@@ -268,9 +269,10 @@ void fakeSensor()
         geometry_msgs::Point pos;
         
 
-        //set shape and color
+        //set shape, color, and lifetime
         tube.type = tube.CYLINDER;
         tube.color = col;
+        tube.lifetime = ros::Duration(0.1);
 
         //identification
         tube.ns = "fake";
@@ -294,10 +296,14 @@ void fakeSensor()
         tube.scale.y = 0.1;
         tube.scale.z = 0.1;
 
-        tubes.markers.push_back(tube);
+        //enforce max distance
+        double distance = sqrt(pow(Tturtle_tube.getX(),2)+pow(Tturtle_tube.getY(),2));
+        if (distance < max_distance)
+        {
+            tubes.markers.push_back(tube);
+        }
     }
     fakeTube_pub.publish(tubes);
-
 }
 
 /// \brief initializes node, subscriber, publisher, parameters, and objects
@@ -340,6 +346,7 @@ int main(int argc, char** argv)
     ros::param::get("/tube_coordinates_y", tube_coordinates_y);
     ros::param::get("/odom_frame_id", odom_frame_id);
     ros::param::get("/tube_var", tube_var);
+    ros::param::get("/max_distance", max_distance);
 
     // initialize noise distributions
     wheel_var = (slip_min+slip_max)/2;
