@@ -39,6 +39,8 @@ namespace nuslam
         /// \returns estimated sigma
         arma::mat predictUncertainty(rigid2d::Twist2D ut);
 
+        arma::mat calculateH();
+
         /// \brief accessor function
         /// \returns n
         int getN();

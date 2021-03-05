@@ -41,6 +41,7 @@
 static ros::Publisher pub;                      //joint state publisher
 static ros::Publisher marker_pub;               //marker array publisher
 static ros::Publisher path_pub;                 //path publisher
+static ros::Publisher fakeTube_pub;             //fake sensor data
 static sensor_msgs::JointState js;              //JointState message without slip
 static sensor_msgs::JointState js_new;          //JointState message with slip
 static sensor_msgs::JointState js_old;          //previous JointState message with slip
@@ -51,6 +52,7 @@ static const int frequency = 200;               //publishing frequency
 static std::normal_distribution<> wheel_noise;  //simulate slip
 static std::normal_distribution<> x_noise;      //simulate encoder noise
 static std::normal_distribution<> w_noise;      //simulate encoder noise
+static std::normal_distribution<> tube_noise;   //measurement noise
 static std::vector<double> tube_coordinates_x;  //x coordinates of tube locations
 static std::vector<double> tube_coordinates_y;  //y coordinates of tube locations
 static nav_msgs::Path path;                     //actual robot path
@@ -240,6 +242,64 @@ void broadcast()
     br.sendTransform(trans);
 }
 
+/// \brief publishes fake sensor readings from the turtle frame
+void fakeSensor()
+{
+    visualization_msgs::MarkerArray tubes;
+
+    //cylinder orientation
+    geometry_msgs::Quaternion rot;
+    rot.x = 0;
+    rot.y = 0;
+    rot.z = 0;
+    rot.w = 1;
+
+    //marker color
+    std_msgs::ColorRGBA col;
+    col.r = 1;
+    col.g = 0;
+    col.b = 0;
+    col.a = 1;
+
+    //loop through all tubes an append marker messages to array
+    for(int i = 0; i<tube_coordinates_x.size(); i++)
+    {
+        visualization_msgs::Marker tube;
+        geometry_msgs::Point pos;
+        
+
+        //set shape and color
+        tube.type = tube.CYLINDER;
+        tube.color = col;
+
+        //identification
+        tube.ns = "fake";
+        tube.header.frame_id = "turtle";
+        tube.header.stamp = ros::Time::now();
+        tube.id = i;
+
+        //set pose
+        rigid2d::Vector2D location = rigid2d::Vector2D(tube_coordinates_x[i],tube_coordinates_y[i]);
+        rigid2d::Transform2D Tw_tube = rigid2d::Transform2D(location,0);
+        rigid2d::Transform2D Tw_turtle = dd.getTransform();
+        rigid2d::Transform2D Tturtle_tube = Tw_turtle.inv()*Tw_tube;
+        pos.x = Tturtle_tube.getX()+tube_noise(get_random());
+        pos.y = Tturtle_tube.getY()+tube_noise(get_random());
+        pos.z = 0;
+        tube.pose.position = pos;
+        tube.pose.orientation = rot;
+
+        //set scale
+        tube.scale.x = 0.1;
+        tube.scale.y = 0.1;
+        tube.scale.z = 0.1;
+
+        tubes.markers.push_back(tube);
+    }
+    fakeTube_pub.publish(tubes);
+
+}
+
 /// \brief initializes node, subscriber, publisher, parameters, and objects
 /// \param argc - initialization arguement
 /// \param argv - initialization arguement
@@ -251,10 +311,11 @@ int main(int argc, char** argv)
     ros::NodeHandle nh;
 
     //initialize publishers and subscribers
-    pub = nh.advertise<sensor_msgs::JointState>("joint_states", 10);
     const ros::Subscriber vel_sub = nh.subscribe("cmd_vel", 10, velCallback);
+    pub = nh.advertise<sensor_msgs::JointState>("joint_states", 10);
     marker_pub = nh.advertise<visualization_msgs::MarkerArray>("tube_locations", 10, true);
     path_pub = nh.advertise<nav_msgs::Path>("real_path", 10);
+    fakeTube_pub = nh.advertise<visualization_msgs::MarkerArray>("fake_sensor", 10);
 
     //get parameters
     double x_var;
@@ -263,6 +324,7 @@ int main(int argc, char** argv)
     double slip_max;
     double wheel_var;
     double tube_radius;
+    double tube_var;
     std::string left_wheel_joint;    //name of left wheel joint
     std::string right_wheel_joint;   //name of right wheel joint
     ros::param::get("/wheel_base", base);
@@ -277,15 +339,18 @@ int main(int argc, char** argv)
     ros::param::get("/tube_coordinates_x", tube_coordinates_x);
     ros::param::get("/tube_coordinates_y", tube_coordinates_y);
     ros::param::get("/odom_frame_id", odom_frame_id);
+    ros::param::get("/tube_var", tube_var);
 
     // initialize noise distributions
     wheel_var = (slip_min+slip_max)/2;
     std::normal_distribution<> d(wheel_var, wheel_var-slip_min);
     std::normal_distribution<> d1(0, x_var);
     std::normal_distribution<> d2(0, w_var);
+    std::normal_distribution<> d3(0, tube_var);
     wheel_noise = d;
     x_noise = d1;
     w_noise = d2;
+    tube_noise = d3;
 
     // initialize differential drive class
     dd = rigid2d::DiffDrive(base,radius);
@@ -319,12 +384,21 @@ int main(int argc, char** argv)
     //looping rate
     ros::Rate r(frequency);
     
+    int i = 0;
     while(ros::ok())
     {
         publishJS();
         pubPath();
         broadcast();
         ros::spinOnce();
+
+        i++;
+        if (i == frequency/10)
+        {
+            fakeSensor();
+            i = 0;
+        }
+
         r.sleep();
     }
 

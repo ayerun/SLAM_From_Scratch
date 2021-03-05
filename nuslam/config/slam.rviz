@@ -8,7 +8,6 @@ Panels:
         - /TF1/Frames1
         - /Odometry1/Shape1
         - /Odometry1/Covariance1
-        - /Path2
       Splitter Ratio: 0.6029411554336548
     Tree Height: 845
   - Class: rviz/Selection
@@ -285,6 +284,14 @@ Visualization Manager:
       Shaft Length: 0.10000000149011612
       Topic: /odom_path
       Unreliable: false
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /fake_sensor
+      Name: MarkerArray
+      Namespaces:
+        fake: true
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
