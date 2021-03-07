@@ -5,3 +5,5 @@
 ```
 roslaunch nuslam slam.launch
 ```
+
+![slam](gifs/slam1.png)
