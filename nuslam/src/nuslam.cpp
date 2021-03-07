@@ -188,7 +188,7 @@ namespace nuslam
         //calculate range and bearing
         arma::mat z = arma::mat(2,1,arma::fill::zeros);
         double rj = sqrt(pow(m.x-state(1,0),2)+pow(m.y-state(2,0),2));
-        double phij = atan2(m.y-state(1,0), m.x-state(2,0))-state(0,0);
+        double phij = atan2(m.y-state(2,0), m.x-state(1,0))-state(0,0);
         z(0,0) = rj;
         z(1,0) = phij;
 

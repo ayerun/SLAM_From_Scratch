@@ -182,7 +182,7 @@ void setTubes()
         tube.scale.z = 0.1;
 
         tube.ns = "real";
-        tube.header.frame_id = "map";
+        tube.header.frame_id = "world";
         tube.header.stamp = ros::Time::now();
         tube.id = i;
 
