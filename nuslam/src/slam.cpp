@@ -8,14 +8,20 @@
 ///     right_wheel_joint (string): name of right wheel joint
 ///     odom_frame_id (string): name of odom frame
 ///     body_frame_id (string): name of body frame
+///     tube_coordinates_x (double array): x coordinates of landmarks
+///     tube_coordinates_y (double array): y coordinates of landmarks
 /// PUBLISHES:
 ///     odom (nav_msgs/Odometry): robot odometry
+///     odom path (nav_msgs/Path): path of actual robot
+///     slam path (nav_msgs/Path): path of robot according to SLAM
 /// SUBSCRIBES:
 ///     /joint_states (sensor_msgs/JointState): wheel joint state values
+///     /fake_sensor (visualization_msgs/MarkerArray): fake sensor data
 /// BROADCASTS:
 ///     transfrom from /odom to /base_footprint
+///     transform from /map to /odom
 /// SERVICES:
-///     set_pose: sets the location and orientation of the robot to a user specified configuration
+///     
 
 #include <armadillo>
 #include <ros/ros.h>

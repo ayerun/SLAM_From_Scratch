@@ -10,6 +10,12 @@
 ///     w_variance (double): variance for w noise
 ///     slip_min (double): minimum wheel slip
 ///     slip_max (double): maximum for wheel slip
+///     tube_radius (double): radius of tubes
+///     tube_coordinates_x (double array): x coordinates of landmarks
+///     tube_coordinates_y (double array): y coordinates of landmarks
+///     odom_frame_id (string): odom frame
+///     tube_var (double): variance of fake sensor data
+///     max_distance (double): max distance of sensor
 /// PUBLISHES:
 ///     joint_states (sensor_msgs/JointState): Apollo wheel joint state values
 ///     tube_locations (visualization_msgs/MarkerArray): locations of tubes in tube_world
