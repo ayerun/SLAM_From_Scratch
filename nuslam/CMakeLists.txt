@@ -154,6 +154,7 @@ add_dependencies(${PROJECT_NAME}_slam ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${ARMADILLO_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}_slam
+  ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 

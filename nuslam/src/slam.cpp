@@ -21,11 +21,13 @@
 #include <ros/ros.h>
 #include <rigid2d/rigid2d.hpp>
 #include <rigid2d/diff_drive.hpp>
+#include <nuslam/nuslam.hpp>
 #include <sensor_msgs/JointState.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
+#include <visualization_msgs/MarkerArray.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -49,9 +51,12 @@ static rigid2d::Vector2D angs;                  //wheel angles
 static rigid2d::Vector2D controls;              //wheel velocities
 static rigid2d::Twist2D Vb;                     //body velocity
 static rigid2d::DiffDrive dd;                   //differential drive object
+static nuslam::ekf filter;
 static double base;                             //wheel separation
 static double radius;                           //wheel radius
 static const int frequency = 200;               //publishing frequency
+static std::vector<double> tube_coordinates_x;  //x coordinates of tube locations
+static std::vector<double> tube_coordinates_y;  //y coordinates of tube locations
 
 /// \brief subscriber callback that tracks odometry
 /// \param js_msg - current joint state
@@ -149,6 +154,25 @@ void broadcast()
     br.sendTransform(trans);
 }
 
+void sensorCallback(const visualization_msgs::MarkerArrayPtr &data)
+{
+    filter.predict(Vb,dd.getTransform());
+    // ROS_ERROR_STREAM(filter.getState());
+    int len = data->markers.size();
+    for(int i = 0; i < len; i++)
+    {
+        visualization_msgs::Marker measurement = data->markers[i];
+
+        // convert measurement to polar
+        rigid2d::Vector2D location = rigid2d::Vector2D(measurement.pose.position.x,measurement.pose.position.y);
+        arma::mat z = nuslam::convert_polar(location);
+
+        // get id
+        int j = measurement.id+1;
+        filter.update(z,j);
+    }
+}
+
 /// \brief initializes node, subscriber, publisher, parameters, and objects
 /// \param argc - initialization arguement
 /// \param argv - initialization arguement
@@ -161,6 +185,7 @@ int main(int argc, char** argv)
 
     //initialize subscribers and publishers
     js_sub = nh.subscribe("joint_states", 10, jsCallback);
+    const ros::Subscriber sensor_sub = nh.subscribe("fake_sensor", 10, sensorCallback);
     pub = nh.advertise<nav_msgs::Odometry>("odom", 10);
     path_odom_pub = nh.advertise<nav_msgs::Path>("odom_path", 10);
 
@@ -171,6 +196,12 @@ int main(int argc, char** argv)
     ros::param::get("/right_wheel_joint", right_wheel_joint);
     ros::param::get("/wheel_base", base);
     ros::param::get("/wheel_radius", radius);
+
+    //change to try to get
+    ros::param::get("/tube_coordinates_x", tube_coordinates_x);
+    ros::param::get("/tube_coordinates_y", tube_coordinates_y);
+
+    filter = nuslam::ekf(tube_coordinates_x.size());
 
     //initialize differential drive object
     dd = rigid2d::DiffDrive(base,radius);

@@ -23,6 +23,7 @@
 #include <ros/ros.h>
 #include <rigid2d/rigid2d.hpp>
 #include <rigid2d/diff_drive.hpp>
+#include <nuslam/nuslam.hpp>
 #include <sensor_msgs/JointState.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>

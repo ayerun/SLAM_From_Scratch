@@ -119,23 +119,23 @@ TEST_CASE("calculate Qbar","[calculateQbar]"){ // Arun, Kumar
 //     REQUIRE(arma::size(sigma_estimate)==arma::size(test_mat));
 // }
 
-// TEST_CASE("calculate H","[calculateH]"){ // Arun, Kumar
-//     //not a great test
-//     int j = 2;
-//     int n = 2;
-//     rigid2d::Vector2D m = rigid2d::Vector2D(0,0);
-//     rigid2d::Vector2D point = rigid2d::Vector2D(1,0);
-//     nuslam::ekf filter = nuslam::ekf(n);
+TEST_CASE("calculate H","[calculateH]"){ // Arun, Kumar
+    //not a great test
+    int j = 2;
+    int n = 2;
+    rigid2d::Vector2D m = rigid2d::Vector2D(0,0);
+    rigid2d::Vector2D point = rigid2d::Vector2D(1,0);
+    nuslam::ekf filter = nuslam::ekf(n);
 
-//     arma::mat H = filter.calculateH(m,point,j);
-//     arma::mat test_mat = arma::mat(2,2*(j-1)+(2*n-2*j)+5,arma::fill::zeros);
+    arma::mat H = filter.calculateH(j);
+    arma::mat test_mat = arma::mat(2,2*(j-1)+(2*n-2*j)+5,arma::fill::zeros);
 
-//     std::cout << H << std::endl;
-//     REQUIRE(arma::size(H)==arma::size(test_mat));
-//     REQUIRE(rigid2d::almost_equal(H(0,0),0));
-//     REQUIRE(rigid2d::almost_equal(H(0,1),1));
-//     REQUIRE(rigid2d::almost_equal(H(0,2),0));
-//     REQUIRE(rigid2d::almost_equal(H(1,0),-1));
-//     REQUIRE(rigid2d::almost_equal(H(1,1),0));
-//     REQUIRE(rigid2d::almost_equal(H(1,2),1));
-// }
+    std::cout << H << std::endl;
+    REQUIRE(arma::size(H)==arma::size(test_mat));
+    REQUIRE(rigid2d::almost_equal(H(0,0),0));
+    REQUIRE(rigid2d::almost_equal(H(0,1),1));
+    REQUIRE(rigid2d::almost_equal(H(0,2),0));
+    REQUIRE(rigid2d::almost_equal(H(1,0),-1));
+    REQUIRE(rigid2d::almost_equal(H(1,1),0));
+    REQUIRE(rigid2d::almost_equal(H(1,2),1));
+}

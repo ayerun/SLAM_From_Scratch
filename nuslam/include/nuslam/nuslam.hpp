@@ -41,22 +41,15 @@ namespace nuslam
         void predict(rigid2d::Twist2D ut,rigid2d::Transform2D odom);
 
         /// \brief calculates H matrix (derivative of relationship between system and measurement with respect to system)
-        /// \param m - landmark location
         /// \param j - landmark id
-        arma::mat calculateH(rigid2d::Vector2D m, int j);
-
-        /// \brief calculate range and bearing to landmark using slam state
-        /// \param m - landmark location
-        /// \param point - measured location
-        arma::mat calculatez(rigid2d::Vector2D m, rigid2d::Vector2D point);
+        arma::mat calculateH(int j);
 
         /// \brief calculate range and bearing to landmark using odom state
-        /// \param m - landmark location
-        /// \param point - measured location
-        arma::mat calculatezhat(rigid2d::Vector2D m, rigid2d::Vector2D point);
+        arma::mat calculatezhat(int j);
 
-        /// \param point - measured location
-        void update(rigid2d::Vector2D m, rigid2d::Vector2D point, int j);
+        /// \param z - measurement
+        /// \param j = landmark id
+        void update(arma::mat z, int j);
 
         /// \brief accessor function
         /// \returns n
@@ -69,10 +62,6 @@ namespace nuslam
         /// \brief accessor function
         /// \returns state
         arma::mat getState();
-
-        /// \brief accessor function
-        /// \returns state_odom
-        arma::mat getState_odom();
 
         /// \brief accessor function
         /// \returns Q
@@ -92,6 +81,8 @@ namespace nuslam
         arma::mat Q;                //process noise covariance matrix
         arma::mat R;                //sensor noise covariance matrix
     };
+
+    arma::mat convert_polar(rigid2d::Vector2D point);
 }
 
 

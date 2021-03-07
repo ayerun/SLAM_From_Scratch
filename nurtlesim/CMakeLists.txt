@@ -8,6 +8,7 @@ project(nurtlesim)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  nuslam
   rigid2d
   roscpp
 )
@@ -104,7 +105,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES nurtlesim
- CATKIN_DEPENDS rigid2d roscpp
+ CATKIN_DEPENDS nuslam rigid2d roscpp
 #  DEPENDS system_lib
 )
 

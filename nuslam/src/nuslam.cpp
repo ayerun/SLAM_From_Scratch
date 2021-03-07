@@ -7,9 +7,9 @@ namespace nuslam
         n = 5;
 
         //sigma
-        arma::mat sig0q = { {0.1,0.1,0.1},
-                            {0.1,0.1,0.1},
-                            {0.1,0.1,0.1}};
+        arma::mat sig0q = { {0.0,0.0,0.0},
+                            {0.0,0.0,0.0},
+                            {0.0,0.0,0.0}};
         arma::mat sig2n3 = arma::mat(2*n,3,arma::fill::zeros);
         arma::mat sig32n = arma::mat(3,2*n,arma::fill::zeros);
         arma::mat sig0m = 999999*arma::mat(2*n,2*n,arma::fill::eye);
@@ -49,7 +49,7 @@ namespace nuslam
         //covariances
         Q = { {0.1, 0.08, 0.12},
               {0.08, 0.1, 0.14},
-              {0.12, 0.14, 0} };
+              {0.12, 0.14, 0.1} };
         R = { {0.1, 0.08},
               {0.08, 0.1} };
     }
@@ -129,59 +129,72 @@ namespace nuslam
         sigma = sigma_estimate;
 
         //update state estimate
-        state_odom = state;
-        state_odom(0,0) = odom.getTheta();
-        state_odom(0,1) = odom.getX();
-        state_odom(0,2) = odom.getY();
+        state(0,0) = odom.getTheta();
+        state(1,0) = odom.getX();
+        state(2,0) = odom.getY();
     }
 
-    arma::mat ekf::calculateH(rigid2d::Vector2D m, int j)
+    arma::mat ekf::calculateH(int j)
     {
-        rigid2d::Vector2D point = rigid2d::Vector2D(state(0,1),state(0,2));
+        //get landmark
+        rigid2d::Vector2D m = rigid2d::Vector2D(state(2*j+1,0),state(2*j+2,0));
+
+        //get slam location
+        rigid2d::Vector2D point = rigid2d::Vector2D(state(1,0),state(2,0));
+
         rigid2d::Vector2D d = m-point;
         rigid2d::Vector2D d_norm = d.normalize();
         double d_mag = pow(d.x,2)+pow(d.y,2);
 
-        arma::mat A = { {0, -d_norm.x, -d_norm.y},
-                        {-1, d.y/d_mag, -d.x/d_mag} };
-        arma::mat B = arma::mat(2,2*(j-1),arma::fill::zeros);
-        arma::mat C = { {d_norm.x, d_norm.y},
-                        {-d.y/d_mag, d.x/d_mag} };
-        arma::mat D = arma::mat(2,2*n-2*j,arma::fill::zeros);
-
+        arma::mat A;
+        arma::mat B;
+        arma::mat C;
+        arma::mat D;
+        if (rigid2d::almost_equal(d_mag,0))
+        {
+            A = { {0, 0, 0},
+                  {-1, 0, 0} };
+            B = arma::mat(2,2*(j-1),arma::fill::zeros);
+            C = { {0, 0},
+                  {0, 0} };
+            D = arma::mat(2,2*n-2*j,arma::fill::zeros);
+        }
+        else
+        {
+            A = { {0, -d_norm.x, -d_norm.y},
+                  {-1, d.y/d_mag, -d.x/d_mag} };
+            B = arma::mat(2,2*(j-1),arma::fill::zeros);
+            C = { {d_norm.x, d_norm.y},
+                  {-d.y/d_mag, d.x/d_mag} };
+            D = arma::mat(2,2*n-2*j,arma::fill::zeros);
+        }
+        
+        
         arma::mat H = arma::join_rows(A,B,C,D);
 
         return H;
     }
 
-    arma::mat ekf::calculatez(rigid2d::Vector2D m, rigid2d::Vector2D point)
+    arma::mat ekf::calculatezhat(int j)
     {
+        //get landmark
+        rigid2d::Vector2D m = rigid2d::Vector2D(state(2*j+1,0),state(2*j+2,0));
+
+        //calculate range and bearing
         arma::mat z = arma::mat(2,1,arma::fill::zeros);
-        double rj = sqrt(pow(m.x-state(1,0),2)-pow(m.y-state(2,0),2));
-        double phij = atan2(m.y-point.x, m.x-point.y)-state(0,0);
+        double rj = sqrt(pow(m.x-state(1,0),2)+pow(m.y-state(2,0),2));
+        double phij = atan2(m.y-state(1,0), m.x-state(2,0))-state(0,0);
         z(0,0) = rj;
         z(1,0) = phij;
+
         return z;
     }
 
-    arma::mat ekf::calculatezhat(rigid2d::Vector2D m, rigid2d::Vector2D point)
-    {
-        arma::mat z = arma::mat(2,1,arma::fill::zeros);
-        double rj = sqrt(pow(m.x-state_odom(1,0),2)-pow(m.y-state_odom(2,0),2));
-        double phij = atan2(m.y-point.x, m.x-point.y)-state_odom(0,0);
-        z(0,0) = rj;
-        z(1,0) = phij;
-        return z;
-    }
-
-    // void ekf::setup_update()
-
-    void ekf::update(rigid2d::Vector2D m, rigid2d::Vector2D point, int j)
+    void ekf::update(arma::mat z, int j)
     {
         //setup
-        arma::mat z = calculatez(m,point);
-        arma::mat zhat = calculatezhat(m,point);
-        arma::mat H = calculateH(m,j);
+        arma::mat zhat = calculatezhat(j);
+        arma::mat H = calculateH(j);
 
         //compute kalman gain
         arma::mat K = sigma*H.t()*(H*sigma*H.t()+R).i();
@@ -189,7 +202,7 @@ namespace nuslam
         //compute poseterior state update
         arma::mat diff = z-zhat;
         diff(1,0) = rigid2d::normalize_angle(diff(1,0)); //angle wraparound
-        state = state_odom + K*diff;
+        state = state + K*diff;
 
         //compute posterior covariance
         arma::mat I = arma::mat(2*n+3,2*n+3,arma::fill::eye);
@@ -211,11 +224,6 @@ namespace nuslam
         return state;
     }
 
-    arma::mat ekf::getState_odom()
-    {
-        return state;
-    }
-
     arma::mat ekf::getQ()
     {
         return Q;
@@ -224,5 +232,15 @@ namespace nuslam
     arma::mat ekf::getR()
     {
         return R;
+    }
+
+    arma::mat convert_polar(rigid2d::Vector2D point)
+    {
+        double r = sqrt(pow(point.x,2)+pow(point.y,2));
+        double phi = atan2(point.y,point.x);
+        arma::mat z = arma::mat(2,1,arma::fill::zeros);
+        z(0,0) = r;
+        z(1,0) = phi;
+        return z;
     }
 }
