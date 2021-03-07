@@ -8,6 +8,7 @@ Panels:
         - /TF1/Frames1
         - /Odometry1/Shape1
         - /Odometry1/Covariance1
+        - /Path3
       Splitter Ratio: 0.6029411554336548
     Tree Height: 845
   - Class: rviz/Selection
@@ -293,6 +294,30 @@ Visualization Manager:
         fake: true
       Queue Size: 100
       Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz/Path
+      Color: 255; 0; 0
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Lines
+      Line Width: 0.029999999329447746
+      Name: Path
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Queue Size: 10
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic: /slam_path
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 108; 108; 108
@@ -357,5 +382,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1920
-  X: 1920
-  Y: 27
+  X: 0
+  Y: 1107

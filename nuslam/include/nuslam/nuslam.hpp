@@ -51,6 +51,8 @@ namespace nuslam
         /// \param j = landmark id
         void update(arma::mat z, int j);
 
+        void initialize_landmark(int j, rigid2d::Vector2D location);
+
         /// \brief accessor function
         /// \returns n
         int getN();

@@ -47,11 +47,16 @@ namespace nuslam
         state = arma::mat(2*n+3,1,arma::fill::zeros);
 
         //covariances
-        Q = { {0.1, 0.08, 0.12},
-              {0.08, 0.1, 0.14},
-              {0.12, 0.14, 0.1} };
-        R = { {0.1, 0.08},
-              {0.08, 0.1} };
+        // Q = { {0.1, 0.08, 0.12},
+        //       {0.08, 0.1, 0.14},
+        //       {0.12, 0.14, 0.1} };
+        // R = { {0.1, 0.08},
+        //       {0.08, 0.1} };
+        Q = { {0.1, 0.0, 0.0},
+              {0.0, 0.1, 0.0},
+              {0.0, 0.0, 0.1} };
+        R = { {0.00001, 0},
+              {0, 0.00001} };
     }
 
     ekf::ekf(int max_n, arma::mat Q_mat, arma::mat R_mat)
@@ -207,6 +212,12 @@ namespace nuslam
         //compute posterior covariance
         arma::mat I = arma::mat(2*n+3,2*n+3,arma::fill::eye);
         sigma = (I-K*H)*sigma;
+    }
+
+    void ekf::initialize_landmark(int j, rigid2d::Vector2D location)
+    {
+        state(2*j+1,0) = location.x;
+        state(2*j+2,0) = location.y;
     }
 
     int ekf::getN()

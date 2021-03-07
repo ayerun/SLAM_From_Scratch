@@ -37,6 +37,7 @@
 static ros::Subscriber js_sub;                  //joint state subscriber
 static ros::Publisher pub;                      //odometry publisher
 static ros::Publisher path_odom_pub;            //path odometery publisher
+static ros::Publisher path_slam_pub;
 static std::string odom_frame_id;               //odometry frame name
 static std::string body_frame_id;               //body frame name
 static std::string left_wheel_joint;            //left wheel joint name
@@ -44,13 +45,12 @@ static std::string right_wheel_joint;           //right wheel joint name
 static sensor_msgs::JointState js_new;          //incoming joint state message
 static sensor_msgs::JointState js_old;          //previous joint state message
 static nav_msgs::Odometry odom;                 //odometry messgae
-static nav_msgs::Path path;                     //odom path message
 static geometry_msgs::TransformStamped trans;   //transform stamped message
-static tf2::Quaternion rot;                     //tf2 quaternion
 static rigid2d::Vector2D angs;                  //wheel angles
 static rigid2d::Vector2D controls;              //wheel velocities
 static rigid2d::Twist2D Vb;                     //body velocity
 static rigid2d::DiffDrive dd;                   //differential drive object
+static rigid2d::Transform2D Tmap_robot;
 static nuslam::ekf filter;
 static double base;                             //wheel separation
 static double radius;                           //wheel radius
@@ -131,13 +131,43 @@ void publishOdomPath()
     path_odom_pub.publish(path);
 }
 
+// \brief publishes path messages of slam robot path
+void publishSlamPath()
+{
+    static nav_msgs::Path path;
+    geometry_msgs::PoseStamped ps;
+    std_msgs::Header head;
+    tf2::Quaternion rot;
+
+    //header
+    head.stamp = ros::Time::now();
+    head.frame_id = "world";
+    ps.header = head;
+    path.header = head;
+    
+    //position
+    ps.pose.position.x = Tmap_robot.getX();
+    ps.pose.position.y = Tmap_robot.getY();
+    ps.pose.position.z = 0;
+
+    //orientation
+    rot.setRPY(0,0,Tmap_robot.getTheta());
+    ps.pose.orientation = tf2::toMsg(rot);
+
+    path.poses.push_back(ps);
+    path_slam_pub.publish(path);
+}
 
 /// \brief broadcast transform from odom to base_footprint
 void broadcast()
 {
     static tf2_ros::TransformBroadcaster br;
+
     tf2::Quaternion rot;
     
+    trans.header.frame_id = odom_frame_id;
+    trans.child_frame_id = body_frame_id;
+
     //time
     trans.header.stamp = ros::Time::now();
 
@@ -154,10 +184,49 @@ void broadcast()
     br.sendTransform(trans);
 }
 
+/// \brief broadcast transform from map to odom
+void broadcast_map2odom()
+{
+    //calculate transform
+    rigid2d::Transform2D Todom_robot = rigid2d::Transform2D(rigid2d::Vector2D(dd.getTransform().getX(),dd.getTransform().getY()),0);
+    // rigid2d::Transform2D Tmap_odom = Tmap_robot*(dd.getTransform().inv());
+    rigid2d::Transform2D Tmap_odom = Tmap_robot*Todom_robot.inv();
+
+    //initialize
+    static tf2_ros::TransformBroadcaster br2;
+    tf2::Quaternion rot;
+    geometry_msgs::TransformStamped trans2;
+
+    //frames
+    trans2.header.frame_id = "map";
+    trans2.child_frame_id = odom_frame_id;
+    
+    //time
+    trans2.header.stamp = ros::Time::now();
+
+    //position
+    trans2.transform.translation.x = Tmap_odom.getX();
+    trans2.transform.translation.y = Tmap_odom.getY();
+    trans2.transform.translation.z = 0;
+
+    //orientation
+    rot.setRPY(0,0,Tmap_odom.getTheta());
+    trans2.transform.rotation = tf2::toMsg(rot);
+
+    //broadcast
+    br2.sendTransform(trans2);
+}
+
+/// \brief implements slam using fake data
+/// \param data - fake data for slam
 void sensorCallback(const visualization_msgs::MarkerArrayPtr &data)
 {
+    static std::unordered_map<int,int> hash;    //landmark initialization map
+    
+    //predict
     filter.predict(Vb,dd.getTransform());
-    // ROS_ERROR_STREAM(filter.getState());
+
+    //update loop
     int len = data->markers.size();
     for(int i = 0; i < len; i++)
     {
@@ -169,8 +238,22 @@ void sensorCallback(const visualization_msgs::MarkerArrayPtr &data)
 
         // get id
         int j = measurement.id+1;
+
+        //initialize landmark
+        if (hash.find(j) == hash.end())
+        {
+            hash[j] = 1;
+            rigid2d::Vector2D turtle_loc = rigid2d::Vector2D(dd.getTransform().getX(),dd.getTransform().getY());
+            filter.initialize_landmark(j,location+turtle_loc);
+        }
+
+        //update
         filter.update(z,j);
     }
+
+    // find transform from map to robot
+    rigid2d::Vector2D pos = rigid2d::Vector2D(filter.getState()(1,0),filter.getState()(2,0));
+    Tmap_robot = rigid2d::Transform2D(pos,0);
 }
 
 /// \brief initializes node, subscriber, publisher, parameters, and objects
@@ -188,6 +271,7 @@ int main(int argc, char** argv)
     const ros::Subscriber sensor_sub = nh.subscribe("fake_sensor", 10, sensorCallback);
     pub = nh.advertise<nav_msgs::Odometry>("odom", 10);
     path_odom_pub = nh.advertise<nav_msgs::Path>("odom_path", 10);
+    path_slam_pub = nh.advertise<nav_msgs::Path>("slam_path", 10);
 
     //get parameters
     ros::param::get("/odom_frame_id", odom_frame_id);
@@ -222,9 +306,6 @@ int main(int argc, char** argv)
     trans.header.frame_id = odom_frame_id;
     trans.child_frame_id = body_frame_id;
 
-    //initialize path msg
-    path.header.frame_id = "world";
-
     ros::Rate r(frequency); //looping rate
 
     while(ros::ok())
@@ -232,7 +313,9 @@ int main(int argc, char** argv)
         ros::spinOnce();
         publishOdom();
         publishOdomPath();
+        publishSlamPath();
         broadcast();
+        broadcast_map2odom();
         r.sleep();
     }
 

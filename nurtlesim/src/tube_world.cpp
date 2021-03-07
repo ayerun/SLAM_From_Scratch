@@ -23,7 +23,6 @@
 #include <ros/ros.h>
 #include <rigid2d/rigid2d.hpp>
 #include <rigid2d/diff_drive.hpp>
-#include <nuslam/nuslam.hpp>
 #include <sensor_msgs/JointState.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
@@ -183,7 +182,7 @@ void setTubes()
         tube.scale.z = 0.1;
 
         tube.ns = "real";
-        tube.header.frame_id = odom_frame_id;
+        tube.header.frame_id = "map";
         tube.header.stamp = ros::Time::now();
         tube.id = i;
 
@@ -202,7 +201,7 @@ void pubPath()
 
     //header
     head.stamp = ros::Time::now();
-    head.frame_id = odom_frame_id;
+    head.frame_id = "world";
     ps.header = head;
     path.header = head;
     
