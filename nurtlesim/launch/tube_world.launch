@@ -16,10 +16,6 @@
     <rosparam param="right_wheel_joint">wheel_right_joint</rosparam>
     <rosparam param="odom_frame_id">world</rosparam>
     <rosparam param="body_frame_id">base_footprint</rosparam>
-    <rosparam param="x_variance">0.01</rosparam>
-    <rosparam param="w_variance">0.01</rosparam>
-    <rosparam param="slip_min">0</rosparam>
-    <rosparam param="slip_max">2</rosparam>
     <rosparam file="$(find nurtlesim)/config/simulation_params.yaml"/>
 
 </launch>

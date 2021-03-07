@@ -7,7 +7,9 @@ namespace nuslam
         n = 5;
 
         //sigma
-        arma::mat sig0q = arma::mat(3,3,arma::fill::zeros); //not sure if this should be all zeros
+        arma::mat sig0q = { {0.1,0.1,0.1},
+                            {0.1,0.1,0.1},
+                            {0.1,0.1,0.1}};
         arma::mat sig2n3 = arma::mat(2*n,3,arma::fill::zeros);
         arma::mat sig32n = arma::mat(3,2*n,arma::fill::zeros);
         arma::mat sig0m = 999999*arma::mat(2*n,2*n,arma::fill::eye);
@@ -22,9 +24,8 @@ namespace nuslam
         Q = { {0.1, 0.08, 0.12},
               {0.08, 0.1, 0.14},
               {0.12, 0.14, 0} };
-        R = { {0.1, 0.08, 0.12},
-              {0.08, 0.1, 0.14},
-              {0.12, 0.14, 0} };
+        R = { {0.1, 0.08},
+              {0.08, 0.1} };
     }
 
     ekf::ekf(int max_n)
@@ -32,7 +33,9 @@ namespace nuslam
         n = max_n;
 
         //sigma
-        arma::mat sig0q = arma::mat(3,3,arma::fill::zeros); //not sure if this should be all zeros
+        arma::mat sig0q = { {0.0,0.0,0.0},
+                            {0.0,0.0,0.0},
+                            {0.0,0.0,0.0}};
         arma::mat sig2n3 = arma::mat(2*n,3,arma::fill::zeros);
         arma::mat sig32n = arma::mat(3,2*n,arma::fill::zeros);
         arma::mat sig0m = 999999*arma::mat(2*n,2*n,arma::fill::eye);
@@ -47,9 +50,8 @@ namespace nuslam
         Q = { {0.1, 0.08, 0.12},
               {0.08, 0.1, 0.14},
               {0.12, 0.14, 0} };
-        R = { {0.1, 0.08, 0.12},
-              {0.08, 0.1, 0.14},
-              {0.12, 0.14, 0} };
+        R = { {0.1, 0.08},
+              {0.08, 0.1} };
     }
 
     ekf::ekf(int max_n, arma::mat Q_mat, arma::mat R_mat)
@@ -57,7 +59,9 @@ namespace nuslam
         n = max_n;
 
         //sigma
-        arma::mat sig0q = arma::mat(3,3,arma::fill::zeros); //not sure if this should be all zeros
+        arma::mat sig0q = { {0.0,0.0,0.0},
+                            {0.0,0.0,0.0},
+                            {0.0,0.0,0.0}};
         arma::mat sig2n3 = arma::mat(2*n,3,arma::fill::zeros);
         arma::mat sig32n = arma::mat(3,2*n,arma::fill::zeros);
         arma::mat sig0m = 999999*arma::mat(2*n,2*n,arma::fill::eye);
@@ -116,13 +120,80 @@ namespace nuslam
         return Q_bar;
     }
 
-    arma::mat ekf::predictUncertainty(rigid2d::Twist2D ut)
+    void ekf::predict(rigid2d::Twist2D ut,rigid2d::Transform2D odom)
     {
+        //predict uncertainty
         arma::mat A = this->calculateA(ut);
         arma::mat Qbar = this->calculateQbar();
         arma::mat sigma_estimate = A*sigma*A.t()+Qbar;
+        sigma = sigma_estimate;
 
-        return sigma_estimate;
+        //update state estimate
+        state_odom = state;
+        state_odom(0,0) = odom.getTheta();
+        state_odom(0,1) = odom.getX();
+        state_odom(0,2) = odom.getY();
+    }
+
+    arma::mat ekf::calculateH(rigid2d::Vector2D m, int j)
+    {
+        rigid2d::Vector2D point = rigid2d::Vector2D(state(0,1),state(0,2));
+        rigid2d::Vector2D d = m-point;
+        rigid2d::Vector2D d_norm = d.normalize();
+        double d_mag = pow(d.x,2)+pow(d.y,2);
+
+        arma::mat A = { {0, -d_norm.x, -d_norm.y},
+                        {-1, d.y/d_mag, -d.x/d_mag} };
+        arma::mat B = arma::mat(2,2*(j-1),arma::fill::zeros);
+        arma::mat C = { {d_norm.x, d_norm.y},
+                        {-d.y/d_mag, d.x/d_mag} };
+        arma::mat D = arma::mat(2,2*n-2*j,arma::fill::zeros);
+
+        arma::mat H = arma::join_rows(A,B,C,D);
+
+        return H;
+    }
+
+    arma::mat ekf::calculatez(rigid2d::Vector2D m, rigid2d::Vector2D point)
+    {
+        arma::mat z = arma::mat(2,1,arma::fill::zeros);
+        double rj = sqrt(pow(m.x-state(1,0),2)-pow(m.y-state(2,0),2));
+        double phij = atan2(m.y-point.x, m.x-point.y)-state(0,0);
+        z(0,0) = rj;
+        z(1,0) = phij;
+        return z;
+    }
+
+    arma::mat ekf::calculatezhat(rigid2d::Vector2D m, rigid2d::Vector2D point)
+    {
+        arma::mat z = arma::mat(2,1,arma::fill::zeros);
+        double rj = sqrt(pow(m.x-state_odom(1,0),2)-pow(m.y-state_odom(2,0),2));
+        double phij = atan2(m.y-point.x, m.x-point.y)-state_odom(0,0);
+        z(0,0) = rj;
+        z(1,0) = phij;
+        return z;
+    }
+
+    // void ekf::setup_update()
+
+    void ekf::update(rigid2d::Vector2D m, rigid2d::Vector2D point, int j)
+    {
+        //setup
+        arma::mat z = calculatez(m,point);
+        arma::mat zhat = calculatezhat(m,point);
+        arma::mat H = calculateH(m,j);
+
+        //compute kalman gain
+        arma::mat K = sigma*H.t()*(H*sigma*H.t()+R).i();
+
+        //compute poseterior state update
+        arma::mat diff = z-zhat;
+        diff(1,0) = rigid2d::normalize_angle(diff(1,0)); //angle wraparound
+        state = state_odom + K*diff;
+
+        //compute posterior covariance
+        arma::mat I = arma::mat(2*n+3,2*n+3,arma::fill::eye);
+        sigma = (I-K*H)*sigma;
     }
 
     int ekf::getN()
@@ -136,6 +207,11 @@ namespace nuslam
     }
 
     arma::mat ekf::getState()
+    {
+        return state;
+    }
+
+    arma::mat ekf::getState_odom()
     {
         return state;
     }

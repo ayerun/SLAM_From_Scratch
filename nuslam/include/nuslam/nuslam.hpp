@@ -34,12 +34,29 @@ namespace nuslam
         /// \returns Q bar matrix
         arma::mat calculateQbar();
 
-        /// \brief propogates uncertainty using the linearized state transition model
+        /// \brief propogates uncertainty using the linearized state transition model to update sigma
+        ///        update state estimate using robot odometry
         /// \param ut - twist
-        /// \returns estimated sigma
-        arma::mat predictUncertainty(rigid2d::Twist2D ut);
+        /// \param odom - robot odometry
+        void predict(rigid2d::Twist2D ut,rigid2d::Transform2D odom);
 
-        arma::mat calculateH();
+        /// \brief calculates H matrix (derivative of relationship between system and measurement with respect to system)
+        /// \param m - landmark location
+        /// \param j - landmark id
+        arma::mat calculateH(rigid2d::Vector2D m, int j);
+
+        /// \brief calculate range and bearing to landmark using slam state
+        /// \param m - landmark location
+        /// \param point - measured location
+        arma::mat calculatez(rigid2d::Vector2D m, rigid2d::Vector2D point);
+
+        /// \brief calculate range and bearing to landmark using odom state
+        /// \param m - landmark location
+        /// \param point - measured location
+        arma::mat calculatezhat(rigid2d::Vector2D m, rigid2d::Vector2D point);
+
+        /// \param point - measured location
+        void update(rigid2d::Vector2D m, rigid2d::Vector2D point, int j);
 
         /// \brief accessor function
         /// \returns n
@@ -54,6 +71,10 @@ namespace nuslam
         arma::mat getState();
 
         /// \brief accessor function
+        /// \returns state_odom
+        arma::mat getState_odom();
+
+        /// \brief accessor function
         /// \returns Q
         arma::mat getQ();
 
@@ -66,7 +87,8 @@ namespace nuslam
     private:
         int n;                      //maximum number of landmarks
         arma::mat sigma;            //covariance matrix
-        arma::mat state;            //system state (robot location & landmarks)
+        arma::mat state;            //system state estimate based on filter (robot location & landmarks)
+        arma::mat state_odom;       //system state based on odometry (robot location & landmarks)
         arma::mat Q;                //process noise covariance matrix
         arma::mat R;                //sensor noise covariance matrix
     };

@@ -14,6 +14,7 @@
 ///     joint_states (sensor_msgs/JointState): Apollo wheel joint state values
 ///     tube_locations (visualization_msgs/MarkerArray): locations of tubes in tube_world
 ///     real_path (nav_msgs/Path): path of actual robot with noise
+///     fake_sensor (visualization_msgs/MarkerArray): fake sensor readings of markers
 /// SUBSCRIBES:
 ///     cmd_vel (geometry_msgs/Twist): commanded body velocity
 /// SERVICES:
@@ -49,6 +50,7 @@ static rigid2d::DiffDrive dd;                   //differential drive object
 static double base;                             //wheel separation
 static double radius;                           //wheel radius
 static double max_distance;
+static double tube_radius;
 static const int frequency = 200;               //publishing frequency
 static std::normal_distribution<> wheel_noise;  //simulate slip
 static std::normal_distribution<> x_noise;      //simulate encoder noise
@@ -175,8 +177,8 @@ void setTubes()
         tube.pose.orientation = rot;
 
         //set scale
-        tube.scale.x = 0.1;
-        tube.scale.y = 0.1;
+        tube.scale.x = tube_radius;
+        tube.scale.y = tube_radius;
         tube.scale.z = 0.1;
 
         tube.ns = "real";
@@ -292,8 +294,8 @@ void fakeSensor()
         tube.pose.orientation = rot;
 
         //set scale
-        tube.scale.x = 0.1;
-        tube.scale.y = 0.1;
+        tube.scale.x = tube_radius;
+        tube.scale.y = tube_radius;
         tube.scale.z = 0.1;
 
         //enforce max distance
@@ -329,7 +331,6 @@ int main(int argc, char** argv)
     double slip_min;
     double slip_max;
     double wheel_var;
-    double tube_radius;
     double tube_var;
     std::string left_wheel_joint;    //name of left wheel joint
     std::string right_wheel_joint;   //name of right wheel joint
@@ -402,7 +403,7 @@ int main(int argc, char** argv)
         i++;
         if (i == frequency/10)
         {
-            fakeSensor();
+            fakeSensor();   //publishes at 10hz
             i = 0;
         }
 
