@@ -1,5 +1,5 @@
 /// \file
-/// \brief
+/// \brief simulates real robot by adding noise the velocity commands and slip to wheels. tracks configuration of real robot
 ///
 /// PARAMETERS:
 ///     wheel_base (double): distance between diff drive wheels
@@ -98,6 +98,7 @@ void odometry()
 /// \param twist - commanded body velocity
 void velCallback(const geometry_msgs::TwistConstPtr &twist)
 {
+    //do nothing if robot is stopped
     if (twist->angular.z == 0 && twist->linear.x == 0)
     {
         return;
@@ -107,8 +108,8 @@ void velCallback(const geometry_msgs::TwistConstPtr &twist)
     rigid2d::Vector2D controls;
 
     //convert to Twist2D
-    Vb.w = twist->angular.z+w_noise(get_random());
-    Vb.x_dot = twist->linear.x+x_noise(get_random());
+    Vb.w = twist->angular.z;
+    Vb.x_dot = twist->linear.x;
     Vb.y_dot = twist->linear.y;
 
     //calculate wheel controls

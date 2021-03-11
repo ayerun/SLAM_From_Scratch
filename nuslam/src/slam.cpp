@@ -12,7 +12,7 @@
 ///     tube_coordinates_y (double array): y coordinates of landmarks
 /// PUBLISHES:
 ///     odom (nav_msgs/Odometry): robot odometry
-///     odom path (nav_msgs/Path): path of actual robot
+///     odom path (nav_msgs/Path): path of robot according to wheel odometry
 ///     slam path (nav_msgs/Path): path of robot according to SLAM
 /// SUBSCRIBES:
 ///     /joint_states (sensor_msgs/JointState): wheel joint state values
@@ -56,7 +56,7 @@ static rigid2d::Vector2D angs;                  //wheel angles
 static rigid2d::Vector2D controls;              //wheel velocities
 static rigid2d::Twist2D Vb;                     //body velocity
 static rigid2d::DiffDrive dd;                   //differential drive object
-static rigid2d::Transform2D Tmap_robot;
+static rigid2d::Transform2D Tmap_robot = rigid2d::Transform2D();
 static nuslam::ekf filter;
 static double base;                             //wheel separation
 static double radius;                           //wheel radius
@@ -249,7 +249,8 @@ void sensorCallback(const visualization_msgs::MarkerArrayPtr &data)
         if (hash.find(j) == hash.end())
         {
             hash[j] = 1;
-            rigid2d::Vector2D turtle_loc = rigid2d::Vector2D(dd.getTransform().getX(),dd.getTransform().getY());
+            // rigid2d::Vector2D turtle_loc = rigid2d::Vector2D(dd.getTransform().getX(),dd.getTransform().getY());
+            rigid2d::Vector2D turtle_loc = rigid2d::Vector2D(Tmap_robot.getX(),Tmap_robot.getY());
             filter.initialize_landmark(j,location+turtle_loc);
         }
 
