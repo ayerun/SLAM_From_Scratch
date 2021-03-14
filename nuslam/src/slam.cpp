@@ -43,7 +43,7 @@
 static ros::Subscriber js_sub;                  //joint state subscriber
 static ros::Publisher pub;                      //odometry publisher
 static ros::Publisher path_odom_pub;            //path odometery publisher
-static ros::Publisher path_slam_pub;
+static ros::Publisher path_slam_pub;            //path slam publisher
 static std::string odom_frame_id;               //odometry frame name
 static std::string body_frame_id;               //body frame name
 static std::string left_wheel_joint;            //left wheel joint name
@@ -56,13 +56,13 @@ static rigid2d::Vector2D angs;                  //wheel angles
 static rigid2d::Vector2D controls;              //wheel velocities
 static rigid2d::Twist2D Vb;                     //body velocity
 static rigid2d::DiffDrive dd;                   //differential drive object
-static rigid2d::Transform2D Tmap_robot = rigid2d::Transform2D();
-static nuslam::ekf filter;
+static nuslam::ekf filter;                      //kalman filter
 static double base;                             //wheel separation
 static double radius;                           //wheel radius
 static const int frequency = 200;               //publishing frequency
 static std::vector<double> tube_coordinates_x;  //x coordinates of tube locations
 static std::vector<double> tube_coordinates_y;  //y coordinates of tube locations
+static rigid2d::Transform2D Tmap_robot = rigid2d::Transform2D();
 
 /// \brief subscriber callback that tracks odometry
 /// \param js_msg - current joint state
@@ -249,7 +249,6 @@ void sensorCallback(const visualization_msgs::MarkerArrayPtr &data)
         if (hash.find(j) == hash.end())
         {
             hash[j] = 1;
-            // rigid2d::Vector2D turtle_loc = rigid2d::Vector2D(dd.getTransform().getX(),dd.getTransform().getY());
             rigid2d::Vector2D turtle_loc = rigid2d::Vector2D(Tmap_robot.getX(),Tmap_robot.getY());
             filter.initialize_landmark(j,location+turtle_loc);
         }

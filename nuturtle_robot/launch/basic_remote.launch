@@ -7,4 +7,8 @@
         <param name="port" value="/dev/ttyACM0"/>
         <param name="baud" value="115200"/>
     </node>
+
+    <node machine="turtlebot" pkg="hls_lfcd_lds_driver" type="hlds_laser_segment_publisher" name="hlds_laser_segment_publisher" >
+        <param name="frame_id" value="base_scan"/>
+    </node>
 </launch>
