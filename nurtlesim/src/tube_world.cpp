@@ -21,6 +21,7 @@
 ///     tube_locations (visualization_msgs/MarkerArray): locations of tubes in tube_world
 ///     real_path (nav_msgs/Path): path of actual robot with noise
 ///     fake_sensor (visualization_msgs/MarkerArray): fake sensor readings of markers
+///     fake_laser (sensor_msgs/LaserScan): simulated lidar data
 /// SUBSCRIBES:
 ///     cmd_vel (geometry_msgs/Twist): commanded body velocity
 /// SERVICES:
@@ -32,6 +33,7 @@
 #include <sensor_msgs/JointState.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
+#include <sensor_msgs/LaserScan.h>
 #include <std_msgs/ColorRGBA.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/TransformStamped.h>
@@ -44,28 +46,39 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <random>
 
-//global variables
-static ros::Publisher pub;                      //joint state publisher
-static ros::Publisher marker_pub;               //marker array publisher
-static ros::Publisher path_pub;                 //path publisher
-static ros::Publisher fakeTube_pub;             //fake sensor data
-static sensor_msgs::JointState js;              //JointState message without slip
-static sensor_msgs::JointState js_new;          //JointState message with slip
-static sensor_msgs::JointState js_old;          //previous JointState message with slip
-static rigid2d::DiffDrive dd;                   //differential drive object
-static double base;                             //wheel separation
-static double radius;                           //wheel radius
-static double max_distance;
-static double tube_radius;
-static const int frequency = 200;               //publishing frequency
-static std::normal_distribution<> wheel_noise;  //simulate slip
-static std::normal_distribution<> x_noise;      //simulate encoder noise
-static std::normal_distribution<> w_noise;      //simulate encoder noise
-static std::normal_distribution<> tube_noise;   //measurement noise
-static std::vector<double> tube_coordinates_x;  //x coordinates of tube locations
-static std::vector<double> tube_coordinates_y;  //y coordinates of tube locations
-static nav_msgs::Path path;                     //actual robot path
-static std::string odom_frame_id;               //odom frame id
+//gl        
+static ros::Publisher pub;                          //joint state publisher
+static ros::Publisher marker_pub;                   //marker array publisher
+static ros::Publisher path_pub;                     //path publisher
+static ros::Publisher fakeTube_pub;                 //fake sensor data
+static ros::Publisher fakeLaser_pub;                //fake lidar data
+static sensor_msgs::JointState js;                  //JointState message without slip
+static sensor_msgs::JointState js_new;              //JointState message with slip
+static sensor_msgs::JointState js_old;              //previous JointState message with slip
+static rigid2d::DiffDrive dd;                       //differential drive object
+static double base;                                 //wheel separation
+static double radius;                               //wheel radius
+static double max_distance;                         //max sensing distance for tube markers
+static double tube_radius;                          //radius of tube markers
+static double range_min;                            //min distance for scan
+static double range_max;                            //max distance for scan
+static double time_increment;                       //time between measurements
+static double angle_increment;                      //angular distance between measurements
+static double laser_var;                            //variance of laser scanner
+static double resolution;                           //resolution of laser scanner
+static int num_samples;                             //number of points per scan
+static const double scan_time = 0.2;                //time between laser scans
+static const int frequency = 200;                   //publishing frequency
+static std::normal_distribution<> wheel_noise;      //simulate slip
+static std::normal_distribution<> x_noise;          //simulate encoder noise
+static std::normal_distribution<> w_noise;          //simulate encoder noise
+static std::normal_distribution<> tube_noise;       //measurement noise
+static std::normal_distribution<> scan_noise;       //laser scan noise
+static std::vector<double> tube_coordinates_x;      //x coordinates of tube locations
+static std::vector<double> tube_coordinates_y;      //y coordinates of tube locations
+static nav_msgs::Path path;                         //actual robot path
+static std::string odom_frame_id;                   //odom frame id
+static std::string body_frame_id;                   //body frame id
 
 
 /// \brief random number generator
@@ -315,6 +328,37 @@ void fakeSensor()
     fakeTube_pub.publish(tubes);
 }
 
+void fakeLaser()
+{
+    //initialize
+    sensor_msgs::LaserScan laser;
+    std_msgs::Header head;
+    const double angle_min = 0.0;                //start angle of scan
+    const double angle_max = 6.28319;            //end angle of scan
+
+    //set header
+    head.frame_id = "turtle";
+    head.stamp = ros::Time::now();
+    laser.header = head;
+
+    //scanner information
+    laser.angle_min = angle_min;
+    laser.angle_max = angle_max;
+    laser.time_increment = scan_time/num_samples;
+    laser.angle_increment = angle_increment;
+    laser.scan_time = scan_time;
+    laser.range_min = range_min;
+    laser.range_max = range_max;
+    laser.ranges.resize(num_samples);
+
+    //populate data
+    for(int i=0; i<num_samples; i++)
+    {
+        laser.ranges[i] = 2.5;
+    }
+    fakeLaser_pub.publish(laser);
+}
+
 /// \brief initializes node, subscriber, publisher, parameters, and objects
 /// \param argc - initialization arguement
 /// \param argv - initialization arguement
@@ -331,6 +375,7 @@ int main(int argc, char** argv)
     marker_pub = nh.advertise<visualization_msgs::MarkerArray>("tube_locations", 10, true);
     path_pub = nh.advertise<nav_msgs::Path>("real_path", 10);
     fakeTube_pub = nh.advertise<visualization_msgs::MarkerArray>("fake_sensor", 10);
+    fakeLaser_pub = nh.advertise<sensor_msgs::LaserScan>("fake_laser", 10);
 
     //get parameters
     double x_var;
@@ -353,8 +398,15 @@ int main(int argc, char** argv)
     ros::param::get("/tube_coordinates_x", tube_coordinates_x);
     ros::param::get("/tube_coordinates_y", tube_coordinates_y);
     ros::param::get("/odom_frame_id", odom_frame_id);
+    ros::param::get("/body_frame_id", body_frame_id);
     ros::param::get("/tube_var", tube_var);
     ros::param::get("/max_distance", max_distance);
+    ros::param::get("/range_min",range_min);
+    ros::param::get("/range_max",range_max);
+    ros::param::get("/angle_increment",angle_increment);
+    ros::param::get("/resolution", resolution);
+    ros::param::get("/num_samples", num_samples);
+    ros::param::get("/laser_var", laser_var);
 
     // initialize noise distributions
     wheel_var = (slip_min+slip_max)/2;
@@ -362,10 +414,12 @@ int main(int argc, char** argv)
     std::normal_distribution<> d1(0, x_var);
     std::normal_distribution<> d2(0, w_var);
     std::normal_distribution<> d3(0, tube_var);
+    std::normal_distribution<> d4(0, laser_var);
     wheel_noise = d;
     x_noise = d1;
     w_noise = d2;
     tube_noise = d3;
+    scan_noise = d4;
 
     // initialize differential drive class
     dd = rigid2d::DiffDrive(base,radius);
@@ -400,6 +454,7 @@ int main(int argc, char** argv)
     ros::Rate r(frequency);
     
     int i = 0;
+    int j = 0;
     while(ros::ok())
     {
         publishJS();
@@ -408,10 +463,16 @@ int main(int argc, char** argv)
         ros::spinOnce();
 
         i++;
+        j++;
         if (i == frequency/10)
         {
             fakeSensor();   //publishes at 10hz
             i = 0;
+        }
+        if (j == frequency*scan_time)
+        {
+            fakeLaser();   //publishes as 5hz
+            j = 0;
         }
 
         r.sleep();
