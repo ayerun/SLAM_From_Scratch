@@ -366,7 +366,7 @@ void fakeLaser()
         rigid2d::Vector2D p1;                                //range min point
         rigid2d::Vector2D p2;                                //range max point
         double phi = rigid2d::deg2rad(i);                    //bearing
-        std::vector<rigid2d::Vector2D> intersections;        //points of intersections
+        std::vector<rigid2d::Vector2D> intersections;        //points of intersections        ROS_ERROR_STREAM(intersections.size());
 
         //points on line
         p1.x = range_min*cos(phi);
@@ -387,12 +387,26 @@ void fakeLaser()
             {
                 //store intersections
                 rigid2d::Vector2D ipoint = cl::findIntersection(point1,point2,tube_radius)+landmarks[j];
-                intersections.push_back(ipoint);
+                if(ipoint.x > p1.x && ipoint.x < p2.x && ipoint.y > p1.y && ipoint.y < p2.y)         //quadrant 1
+                {
+                    intersections.push_back(ipoint);
+                }
+                else if(ipoint.x < p1.x && ipoint.x > p2.x && ipoint.y < p1.y && ipoint.y > p2.y)    //quadrant 3
+                {
+                    intersections.push_back(ipoint);
+                }
+                else if(ipoint.x < p1.x && ipoint.x > p2.x && ipoint.y > p1.y && ipoint.y < p2.y)    //quadrant 2
+                {
+                    intersections.push_back(ipoint);
+                }
+                else if(ipoint.x > p1.x && ipoint.x < p2.x && ipoint.y < p1.y && ipoint.y > p2.y)    //quadrant 4
+                {
+                    intersections.push_back(ipoint);
+                }
             }
         }
 
         const rigid2d::Vector2D zero;     //zero vector
-        laser.ranges[i] = 2.5;
 
         //one intersection
         if(intersections.size() == 1)
@@ -416,6 +430,11 @@ void fakeLaser()
             min_distance = *std::min_element(distances,distances+intersections.size());
             laser.ranges[i] = min_distance;
         }
+        else
+        {
+            laser.ranges[i] = 2.5;
+        }
+        
     }
     fakeLaser_pub.publish(laser);
 }
