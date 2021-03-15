@@ -30,6 +30,7 @@
 #include <ros/ros.h>
 #include <rigid2d/rigid2d.hpp>
 #include <rigid2d/diff_drive.hpp>
+#include <nurtlesim/nurtlesim.hpp>
 #include <sensor_msgs/JointState.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
@@ -46,7 +47,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <random>
 
-//gl        
+//global variables       
 static ros::Publisher pub;                          //joint state publisher
 static ros::Publisher marker_pub;                   //marker array publisher
 static ros::Publisher path_pub;                     //path publisher
@@ -79,6 +80,7 @@ static std::vector<double> tube_coordinates_y;      //y coordinates of tube loca
 static nav_msgs::Path path;                         //actual robot path
 static std::string odom_frame_id;                   //odom frame id
 static std::string body_frame_id;                   //body frame id
+static std::vector<rigid2d::Vector2D> landmarks_world;               //list of landmark locations
 
 
 /// \brief random number generator
@@ -351,10 +353,69 @@ void fakeLaser()
     laser.range_max = range_max;
     laser.ranges.resize(num_samples);
 
+    //calculate landmark positions in turtle frame
+    std::vector<rigid2d::Vector2D> landmarks;
+    for(int j=0; j<landmarks_world.size(); j++)
+    {
+        landmarks.push_back((dd.getTransform().inv())(landmarks_world[j]));
+    }
+
     //populate data
     for(int i=0; i<num_samples; i++)
     {
+        rigid2d::Vector2D p1;                                //range min point
+        rigid2d::Vector2D p2;                                //range max point
+        double phi = rigid2d::deg2rad(i);                    //bearing
+        std::vector<rigid2d::Vector2D> intersections;        //points of intersections
+
+        //points on line
+        p1.x = range_min*cos(phi);
+        p1.y = range_min*sin(phi);
+        p2.x = range_max*cos(phi);
+        p2.y = range_max*sin(phi);
+
+        //check all landmarks for intersections
+        for(int j=0; j<landmarks.size(); j++)
+        {
+            //put landmark at (0,0)
+            const rigid2d::Vector2D point1 = p1-landmarks[j];
+            const rigid2d::Vector2D point2 = p2-landmarks[j];
+
+            //check for intersection
+            double disc = cl::discriminant(point1,point2,tube_radius);
+            if (disc >= 0)
+            {
+                //store intersections
+                rigid2d::Vector2D ipoint = cl::findIntersection(point1,point2,tube_radius)+landmarks[j];
+                intersections.push_back(ipoint);
+            }
+        }
+
+        const rigid2d::Vector2D zero;     //zero vector
         laser.ranges[i] = 2.5;
+
+        //one intersection
+        if(intersections.size() == 1)
+        {
+            laser.ranges[i] = cl::dist(zero,intersections[0]);
+        }
+
+        //multiple intersections
+        else if(intersections.size() > 1)
+        {
+            double distances[intersections.size()];     //array of distances
+            double min_distance = 0;                        //minimum distance
+
+            //calculate all distances
+            for(int j=0; j<intersections.size(); j++)
+            {
+                distances[j] = cl::dist(zero,intersections[j]);
+            }
+
+            //find min distance
+            min_distance = *std::min_element(distances,distances+intersections.size());
+            laser.ranges[i] = min_distance;
+        }
     }
     fakeLaser_pub.publish(laser);
 }
@@ -407,6 +468,15 @@ int main(int argc, char** argv)
     ros::param::get("/resolution", resolution);
     ros::param::get("/num_samples", num_samples);
     ros::param::get("/laser_var", laser_var);
+
+    //initialize landmark locations
+    for(int i = 0; i<tube_coordinates_x.size(); i++)
+    {
+        rigid2d::Vector2D lm;
+        lm.x = tube_coordinates_x[i];
+        lm.y = tube_coordinates_y[i];
+        landmarks_world.push_back(lm);
+    }
 
     // initialize noise distributions
     wheel_var = (slip_min+slip_max)/2;

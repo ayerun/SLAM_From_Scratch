@@ -7,7 +7,7 @@
     <!-- launch nodes -->
     <node name="teleop" pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" />
     <node name="odometer" pkg="rigid2d" type="rigid2d_odometer" />
-    <node name="tube_world" pkg="nurtlesim" type="nurtlesim_tube_world" />
+    <node name="tube_world" pkg="nurtlesim" type="nurtlesim_tube_world"/>
 
     <!-- parameters for nodes -->
     <rosparam param="wheel_base">0.16</rosparam>
