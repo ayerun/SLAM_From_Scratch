@@ -18,6 +18,10 @@ namespace cl
     rigid2d::Vector2D findIntersection(const rigid2d::Vector2D p1, const rigid2d::Vector2D p2, const double r);
 
     double discriminant(const rigid2d::Vector2D p1, const rigid2d::Vector2D p2, const double r);
+
+    rigid2d::Vector2D line(const rigid2d::Vector2D p1, const rigid2d::Vector2D p2);
+
+    rigid2d::Vector2D line_intersect(const rigid2d::Vector2D line1, const rigid2d::Vector2D line2);
 }
 
 

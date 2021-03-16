@@ -330,6 +330,27 @@ void fakeSensor()
     fakeTube_pub.publish(tubes);
 }
 
+std::vector<rigid2d::Vector2D> storeIntersections(const rigid2d::Vector2D ipoint, const rigid2d::Vector2D p1, const rigid2d::Vector2D p2, std::vector<rigid2d::Vector2D> intersections)
+{
+    if(ipoint.x > p1.x && ipoint.x < p2.x && ipoint.y > p1.y && ipoint.y < p2.y)         //quadrant 1
+    {
+        intersections.push_back(ipoint);
+    }
+    else if(ipoint.x < p1.x && ipoint.x > p2.x && ipoint.y < p1.y && ipoint.y > p2.y)    //quadrant 3
+    {
+        intersections.push_back(ipoint);
+    }
+    else if(ipoint.x < p1.x && ipoint.x > p2.x && ipoint.y > p1.y && ipoint.y < p2.y)    //quadrant 2
+    {
+        intersections.push_back(ipoint);
+    }
+    else if(ipoint.x > p1.x && ipoint.x < p2.x && ipoint.y < p1.y && ipoint.y > p2.y)    //quadrant 4
+    {
+        intersections.push_back(ipoint);
+    }
+    return intersections;
+}
+
 void fakeLaser()
 {
     //initialize
@@ -337,6 +358,8 @@ void fakeLaser()
     std_msgs::Header head;
     const double angle_min = 0.0;                //start angle of scan
     const double angle_max = 6.28319;            //end angle of scan
+    const double width = 3;                      //boarder width
+    const double length = 3;                     //boarder length
 
     //set header
     head.frame_id = "turtle";
@@ -381,60 +404,68 @@ void fakeLaser()
             const rigid2d::Vector2D point1 = p1-landmarks[j];
             const rigid2d::Vector2D point2 = p2-landmarks[j];
 
-            //check for intersection
+            //check for circle intersection
             double disc = cl::discriminant(point1,point2,tube_radius);
             if (disc >= 0)
             {
                 //store intersections
                 rigid2d::Vector2D ipoint = cl::findIntersection(point1,point2,tube_radius)+landmarks[j];
-                if(ipoint.x > p1.x && ipoint.x < p2.x && ipoint.y > p1.y && ipoint.y < p2.y)         //quadrant 1
-                {
-                    intersections.push_back(ipoint);
-                }
-                else if(ipoint.x < p1.x && ipoint.x > p2.x && ipoint.y < p1.y && ipoint.y > p2.y)    //quadrant 3
-                {
-                    intersections.push_back(ipoint);
-                }
-                else if(ipoint.x < p1.x && ipoint.x > p2.x && ipoint.y > p1.y && ipoint.y < p2.y)    //quadrant 2
-                {
-                    intersections.push_back(ipoint);
-                }
-                else if(ipoint.x > p1.x && ipoint.x < p2.x && ipoint.y < p1.y && ipoint.y > p2.y)    //quadrant 4
-                {
-                    intersections.push_back(ipoint);
-                }
+                intersections = storeIntersections(ipoint, p1, p2, intersections);
             }
         }
 
-        const rigid2d::Vector2D zero;     //zero vector
+        //check for wall intersections
+        rigid2d::Vector2D line = cl::line(p1,p2);
 
-        //one intersection
-        if(intersections.size() == 1)
+        //right wall
+        rigid2d::Vector2D r_wall_p1 = rigid2d::Vector2D(width/2,0);                 //points on wall
+        rigid2d::Vector2D r_wall_p2 = rigid2d::Vector2D(width/2,2);
+        r_wall_p1 = (dd.getTransform().inv())(r_wall_p1);                           //transform to turtle frame
+        r_wall_p2 = (dd.getTransform().inv())(r_wall_p2);
+        rigid2d::Vector2D r_wall = cl::line(r_wall_p1,r_wall_p2);                   //calculate line
+        rigid2d::Vector2D r_intercept = cl::line_intersect(line,r_wall);            //find intercept
+        intersections = storeIntersections(r_intercept, p1, p2, intersections);     //store intersections
+
+        //left wall
+        rigid2d::Vector2D l_wall_p1 = rigid2d::Vector2D(-width/2,0);                //points on wall
+        rigid2d::Vector2D l_wall_p2 = rigid2d::Vector2D(-width/2,2);
+        l_wall_p1 = (dd.getTransform().inv())(l_wall_p1);                           //transform to turtle frame
+        l_wall_p2 = (dd.getTransform().inv())(l_wall_p2);
+        rigid2d::Vector2D l_wall = cl::line(l_wall_p1,l_wall_p2);                   //calculate line
+        rigid2d::Vector2D l_intercept = cl::line_intersect(line,l_wall);            //find intercept
+        intersections = storeIntersections(l_intercept, p1, p2, intersections);     //store intersections
+
+        //top wall
+        rigid2d::Vector2D t_wall_p1 = rigid2d::Vector2D(0,length/2);                //points on wall
+        rigid2d::Vector2D t_wall_p2 = rigid2d::Vector2D(2,length/2);
+        t_wall_p1 = (dd.getTransform().inv())(t_wall_p1);                           //transform to turtle frame
+        t_wall_p2 = (dd.getTransform().inv())(t_wall_p2);
+        rigid2d::Vector2D t_wall = cl::line(t_wall_p1,t_wall_p2);                   //calculate line
+        rigid2d::Vector2D t_intercept = cl::line_intersect(line,t_wall);            //find intercept
+        intersections = storeIntersections(t_intercept, p1, p2, intersections);     //store intersections
+
+        //bottom wall
+        rigid2d::Vector2D b_wall_p1 = rigid2d::Vector2D(0,-length/2);                //points on wall
+        rigid2d::Vector2D b_wall_p2 = rigid2d::Vector2D(2,-length/2);
+        b_wall_p1 = (dd.getTransform().inv())(b_wall_p1);                           //transform to turtle frame
+        b_wall_p2 = (dd.getTransform().inv())(b_wall_p2);
+        rigid2d::Vector2D b_wall = cl::line(b_wall_p1,b_wall_p2);                   //calculate line
+        rigid2d::Vector2D b_intercept = cl::line_intersect(line,b_wall);            //find intercept
+        intersections = storeIntersections(b_intercept, p1, p2, intersections);     //store intersections
+
+        const rigid2d::Vector2D zero;               //zero vector
+        double distances[intersections.size()];     //array of distances
+        double min_distance = 0;                    //minimum distance
+
+        //calculate all distances
+        for(int j=0; j<intersections.size(); j++)
         {
-            laser.ranges[i] = cl::dist(zero,intersections[0]);
+            distances[j] = cl::dist(zero,intersections[j]);
         }
 
-        //multiple intersections
-        else if(intersections.size() > 1)
-        {
-            double distances[intersections.size()];     //array of distances
-            double min_distance = 0;                        //minimum distance
-
-            //calculate all distances
-            for(int j=0; j<intersections.size(); j++)
-            {
-                distances[j] = cl::dist(zero,intersections[j]);
-            }
-
-            //find min distance
-            min_distance = *std::min_element(distances,distances+intersections.size());
-            laser.ranges[i] = min_distance;
-        }
-        else
-        {
-            laser.ranges[i] = 2.5;
-        }
-        
+        //find min distance and add noise
+        min_distance = *std::min_element(distances,distances+intersections.size());
+        laser.ranges[i] = min_distance+scan_noise(get_random()); 
     }
     fakeLaser_pub.publish(laser);
 }

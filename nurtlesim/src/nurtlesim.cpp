@@ -72,4 +72,22 @@ namespace cl
         double disc = pow(r,2)*pow(dr,2)-pow(D,2);
         return disc;
     }
+
+    rigid2d::Vector2D line(const rigid2d::Vector2D p1, const rigid2d::Vector2D p2)
+    {
+        rigid2d::Vector2D params;
+        params.x = (p2.y-p1.y)/(p2.x-p1.x);     //slope
+        params.y = p1.y-params.x*p1.x;          //y intercept
+
+        return params;
+    }
+
+    rigid2d::Vector2D line_intersect(const rigid2d::Vector2D line1, const rigid2d::Vector2D line2)
+    {
+        rigid2d::Vector2D intersect;
+        intersect.x = (line2.y-line1.y)/(line1.x-line2.x);
+        intersect.y = line1.x*intersect.x+line1.y;
+        
+        return intersect;
+    }
 }
