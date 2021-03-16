@@ -13,3 +13,5 @@ angle_increment: 0.0175
 resolution: 1
 laser_var: 0.01
 num_samples: 360
+boarder_length: 3
+boarder_width: 3

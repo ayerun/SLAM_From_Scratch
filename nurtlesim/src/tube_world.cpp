@@ -67,6 +67,8 @@ static double time_increment;                       //time between measurements
 static double angle_increment;                      //angular distance between measurements
 static double laser_var;                            //variance of laser scanner
 static double resolution;                           //resolution of laser scanner
+static double width;                                //boarder width
+static double length;                               //boarder length
 static int num_samples;                             //number of points per scan
 static const double scan_time = 0.2;                //time between laser scans
 static const int frequency = 200;                   //publishing frequency
@@ -330,6 +332,12 @@ void fakeSensor()
     fakeTube_pub.publish(tubes);
 }
 
+/// \brief store point of intersection without reflection
+/// \param ipoint - point of intersection
+/// \param p1 - point on ray
+/// \param p2 - point on ray
+/// \param intersections - vector to store intersections
+/// \returns vector of intersections
 std::vector<rigid2d::Vector2D> storeIntersections(const rigid2d::Vector2D ipoint, const rigid2d::Vector2D p1, const rigid2d::Vector2D p2, std::vector<rigid2d::Vector2D> intersections)
 {
     if(ipoint.x > p1.x && ipoint.x < p2.x && ipoint.y > p1.y && ipoint.y < p2.y)         //quadrant 1
@@ -351,6 +359,7 @@ std::vector<rigid2d::Vector2D> storeIntersections(const rigid2d::Vector2D ipoint
     return intersections;
 }
 
+/// \brief publishes fake lidar data
 void fakeLaser()
 {
     //initialize
@@ -358,8 +367,6 @@ void fakeLaser()
     std_msgs::Header head;
     const double angle_min = 0.0;                //start angle of scan
     const double angle_max = 6.28319;            //end angle of scan
-    const double width = 3;                      //boarder width
-    const double length = 3;                     //boarder length
 
     //set header
     head.frame_id = "turtle";
@@ -518,6 +525,8 @@ int main(int argc, char** argv)
     ros::param::get("/resolution", resolution);
     ros::param::get("/num_samples", num_samples);
     ros::param::get("/laser_var", laser_var);
+    ros::param::get("/boarder_length", length);
+    ros::param::get("/boarder_width", width);
 
     //initialize landmark locations
     for(int i = 0; i<tube_coordinates_x.size(); i++)
