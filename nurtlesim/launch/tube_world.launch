@@ -1,8 +1,9 @@
 <launch>
+    <arg name="use_rviz" default="true" doc="launch rviz"/>
 
     <!-- visualize apollo -->
     <include file="$(find nuturtle_description)/launch/load.launch" />
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find nurtlesim)/config/sim.rviz" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find nurtlesim)/config/sim.rviz" if="$(arg use_rviz)"/>
 
     <!-- launch nodes -->
     <node name="teleop" pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" />

@@ -484,7 +484,7 @@ void fakeLaser()
 int main(int argc, char** argv)
 {
     //start node
-    ros::init(argc, argv, "odometer");
+    ros::init(argc, argv, "tube_world");
     ros::NodeHandle nh;
 
     //initialize publishers and subscribers

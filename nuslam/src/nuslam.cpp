@@ -249,4 +249,21 @@ namespace nuslam
         z(1,0) = phi;
         return z;
     }
+
+    rigid2d::Vector2D rb2xy(const double r, const double b)
+    {
+        double b_rad = rigid2d::deg2rad(b);
+        rigid2d::Vector2D p;
+        p.x = r*cos(b_rad);
+        p.y = r*sin(b_rad);
+        return p;
+    }
+
+    double dist(const rigid2d::Vector2D p1, const rigid2d::Vector2D p2)
+    {
+        double dx = p2.x-p1.x;
+        double dy = p2.y-p1.y;
+        double dr = sqrt(pow(dx,2)+pow(dy,2));
+        return dr;
+    }
 }

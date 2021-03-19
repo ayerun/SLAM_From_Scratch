@@ -85,6 +85,8 @@ namespace nuslam
     };
 
     arma::mat convert_polar(rigid2d::Vector2D point);
+    rigid2d::Vector2D rb2xy(const double r, const double b);
+    double dist(const rigid2d::Vector2D p1, const rigid2d::Vector2D p2);
 }
 
 

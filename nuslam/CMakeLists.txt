@@ -139,6 +139,7 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/nuslam_node.cpp)
 add_executable(${PROJECT_NAME}_slam src/slam.cpp)
+add_executable(${PROJECT_NAME}_landmarks src/landmarks.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -150,10 +151,15 @@ add_executable(${PROJECT_NAME}_slam src/slam.cpp)
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(${PROJECT_NAME}_slam ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME}_landmarks ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${ARMADILLO_LIBRARIES})
 target_link_libraries(${PROJECT_NAME}_slam
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(${PROJECT_NAME}_landmarks
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
@@ -175,6 +181,9 @@ target_link_libraries(${PROJECT_NAME}_slam
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
 install(TARGETS ${PROJECT_NAME}_slam
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+install(TARGETS ${PROJECT_NAME}_landmarks
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
