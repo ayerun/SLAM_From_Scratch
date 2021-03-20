@@ -84,8 +84,21 @@ namespace nuslam
         arma::mat R;                //sensor noise covariance matrix
     };
 
+    /// \brief convert xy coordinates to range-bearing
+    /// \param point - xy coordinate
+    /// \returns range bearing coordinates
     arma::mat convert_polar(rigid2d::Vector2D point);
+
+    /// \brief convert range bearing coordinates to xy
+    /// \param r - range
+    /// \param b - bearing
+    /// \returns xy point
     rigid2d::Vector2D rb2xy(const double r, const double b);
+
+    /// \brief calculate the distance between 2 ponts
+    /// \param p1 - point 1
+    /// \param p2 - point 2
+    /// \returns distance
     double dist(const rigid2d::Vector2D p1, const rigid2d::Vector2D p2);
 }
 

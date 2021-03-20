@@ -3,7 +3,7 @@
 * Contains simulated world in rviz for Turtlebot3
 
 # Configuration Instructions
-* simulation.yaml contains simulation parameters
+* simulation_params.yaml contains simulation parameters
 
 # Example Usage
 ```
