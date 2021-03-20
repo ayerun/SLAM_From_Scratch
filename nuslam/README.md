@@ -1,9 +1,9 @@
 # nuslam
 * Contains a library for extended kalman filters and provides and implementation of SLAM
 
-# Example Usage
+### Example Usage
 ```
 roslaunch nuslam slam.launch
 ```
 
-![slam](gifs/slam1.png)
+![slam](gifs/slam3.png)

@@ -2,11 +2,11 @@
 /// \brief Implement circle regression to find landmark locations from sensor readings
 ///
 /// PARAMETERS:
-///     
+///     dist_thres: distance threshold for consecutive lidar measurements in a cluster
 /// PUBLISHES:
-///     measured_tubes (visualization_msgs/MarkerArray): markers at locations of sensed tubes
+///    /cluster_locations (visualization_msgs/MarkerArray): markers at locations of clustered data
 /// SUBSCRIBES:
-///     
+///     /fake_laser (sensor_msgs/LaserScan): fake lidar data
 /// SERVICES:
 ///
 
@@ -17,19 +17,15 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
 
-//process
-//sub fake laser
-//cluster points based on distance
-    //discard clusters less than 3
-    //consective points are part of same cluster
-    //scan wraps dude
-    //publish markers
 
 //Global variables
 static const int frequency = 200;
 static double dist_thres;
 static ros::Publisher cluster_pub;
 
+/// \brief publishes marker array at cluster locations
+/// \param clusters[] - array of vectors containing Vector2D points (each vector is a cluster)
+/// \param num_elements - length of clusters[]
 void publishClusters(std::vector<rigid2d::Vector2D> clusters[], int num_elements)
 {
     visualization_msgs::MarkerArray cluster_tubes;
@@ -94,6 +90,8 @@ void publishClusters(std::vector<rigid2d::Vector2D> clusters[], int num_elements
     cluster_pub.publish(cluster_tubes);
 }
 
+/// \brief subscriber callback that clusters laserscan data
+/// \param ls - incoming laserscan message
 void laserCallback(const sensor_msgs::LaserScanConstPtr &ls)
 {   
     //clustering setup
