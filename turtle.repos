@@ -1,9 +1,0 @@
-repositories:
-  hw1:
-    type: git
-    url: git@github.com:ME495-Navigation/assignment-ayerun.git
-    version: master
-  nuturtlebot:
-    type: git
-    url: https://github.com/ME495-Navigation/nuturtlebot.git
-    version: master
