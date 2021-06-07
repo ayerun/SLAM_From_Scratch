@@ -3,7 +3,7 @@
 
 # Description
 * This repository is a remake of the Turtlebot3 Burger ROS software
-* See this portfolio post for a detailed explanation
+* See <a href="https://ayerun.github.io/Portfolio/SLAM.html" target="_blank">this portfolio post</a> for a detailed explanation
 * Features
     * Differential Drive Kinematics
     * Dead Reckoning Odometry
