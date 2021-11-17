@@ -85,6 +85,12 @@ namespace rigid2d
         return v;
     }
 
+    bool operator==(Vector2D lhs, const Vector2D & rhs)
+    {
+        if (lhs.x == rhs.x && lhs.y == rhs.y) return true;
+        else return false;
+    }
+
     std::ostream & operator<<(std::ostream & os, const Vector2D & v)
     {
         const double x = v.x;

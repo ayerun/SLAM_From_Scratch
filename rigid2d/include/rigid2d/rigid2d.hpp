@@ -140,6 +140,12 @@ namespace rigid2d
     /// \return difference between vectors
     Vector2D operator-(Vector2D lhs, const Vector2D & rhs);
 
+    /// \brief vector equality
+    /// \param lhs - left hand side vector
+    /// \param rhs - right hand side vector
+    /// \return true if vectors have same components
+    bool operator==(Vector2D lhs, const Vector2D & rhs);
+
     /// \brief calculate magnitude of 2D vector
     /// \return magnitude of vector
     double magnitude(const Vector2D & v);

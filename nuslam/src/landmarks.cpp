@@ -23,11 +23,7 @@ static const int frequency = 200;
 static double dist_thres;
 static ros::Publisher cluster_pub;
 
-/// \brief publishes marker array at cluster locations
-/// \param clusters[] - array of vectors containing Vector2D points (each vector is a cluster)
-/// \param num_elements - length of clusters[]
-void publishClusters(std::vector<rigid2d::Vector2D> clusters[], int num_elements)
-{
+void publishClusters(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
     visualization_msgs::MarkerArray cluster_tubes;
 
     //cylinder orientation
@@ -44,65 +40,53 @@ void publishClusters(std::vector<rigid2d::Vector2D> clusters[], int num_elements
     col.b = 0;
     col.a = 1;
 
-    for(int i = 0; i < num_elements; i++)
+    for(int i = 0; i < clusters.size(); i++)
     {
-        //discard clusters smaller than 3
-        if(clusters[i].size() < 3)
+        visualization_msgs::Marker tube;
+        geometry_msgs::Point pos;
+        
+        //set shape and color and lifetime
+        tube.type = tube.CYLINDER;
+        tube.color = col;
+        tube.lifetime = ros::Duration(0.1);
+
+        //set pose
+        rigid2d::Vector2D avg;
+        for(int j = 0; j < clusters[i].size(); j++)
         {
-            clusters[i].clear();
+            avg += clusters[i][j];
         }
-        else
-        {
-            visualization_msgs::Marker tube;
-            geometry_msgs::Point pos;
-            
-            //set shape and color and lifetime
-            tube.type = tube.CYLINDER;
-            tube.color = col;
-            tube.lifetime = ros::Duration(0.1);
+        avg = avg*(1.0/clusters[i].size());
+        pos.x = avg.x;
+        pos.y = avg.y;
+        pos.z = 0;
+        tube.pose.position = pos;
+        tube.pose.orientation = rot;
 
-            //set pose
-            rigid2d::Vector2D avg;
-            for(int j = 0; j < clusters[i].size(); j++)
-            {
-                avg += clusters[i][j];
-            }
-            avg = avg*(1.0/clusters[i].size());
-            pos.x = avg.x;
-            pos.y = avg.y;
-            pos.z = 0;
-            tube.pose.position = pos;
-            tube.pose.orientation = rot;
+        //set scale
+        tube.scale.x = 0.0762;
+        tube.scale.y = 0.0762;
+        tube.scale.z = 0.1;
 
-            //set scale
-            tube.scale.x = 0.0762;
-            tube.scale.y = 0.0762;
-            tube.scale.z = 0.1;
+        tube.ns = "cluster";
+        tube.header.frame_id = "turtle";
+        tube.header.stamp = ros::Time::now();
+        tube.id = i;
 
-            tube.ns = "cluster";
-            tube.header.frame_id = "turtle";
-            tube.header.stamp = ros::Time::now();
-            tube.id = i;
-
-            cluster_tubes.markers.push_back(tube);
-        }
+        cluster_tubes.markers.push_back(tube);
     }
     cluster_pub.publish(cluster_tubes);
 }
 
 /// \brief subscriber callback that clusters laserscan data
 /// \param ls - incoming laserscan message
-void laserCallback(const sensor_msgs::LaserScanConstPtr &ls)
-{   
+void laserCallback(const sensor_msgs::LaserScanConstPtr &ls) {   
     //clustering setup
-    std::vector<rigid2d::Vector2D> clusters[ls->ranges.size()];     //array of vectors containing (x,y) coordinates
-    int j = 0;                                                      //index for clusters
-    bool flag = false;
-    bool flag2 = true;
+    std::vector<std::vector<rigid2d::Vector2D>> clusters;     //array of vectors containing (x,y) coordinates
+    std::vector<rigid2d::Vector2D> cluster;
 
-    //clustering
-    for(int i = 0; i < ls->ranges.size(); i++)
-    {
+    for (int i=1; i<ls->ranges.size(); i++) {
+        
         //convert to xy
         rigid2d::Vector2D p_new = nuslam::rb2xy(ls->ranges[i],i);
         rigid2d::Vector2D p_old = nuslam::rb2xy(ls->ranges[i-1],i-1);
@@ -110,35 +94,44 @@ void laserCallback(const sensor_msgs::LaserScanConstPtr &ls)
         //calculate distance
         double d = nuslam::dist(p_new,p_old);
 
-        //if part of cluster
-        if (d < dist_thres)
-        {
-            if(i==0)
-            {
-                flag = true;
+        //part of cluster
+        if (d < dist_thres) {
+            if (i == 1) {
+                cluster.push_back(p_old);
             }
-            clusters[j].push_back(p_new);
+            cluster.push_back(p_new);
         }
-        //if not part of cluster
-        else
-        {
-            if(i==ls->ranges.size()-1)
-            {
-                flag2 = false;
+
+        //not part of cluster
+        else {
+            if (cluster.size() >= 3) clusters.push_back(cluster);
+            cluster.clear();
+        }
+
+        //loop closure
+        if (i+1 == ls->ranges.size()) {
+            rigid2d::Vector2D first = clusters[0][0];           //first clustered point
+
+            //ensure first clustered point is first point in laser scan
+            if (first == nuslam::rb2xy(ls->ranges[0],0)) {
+                double d2 = nuslam::dist(p_new,first);
+
+                //cluster
+                if (d2 < dist_thres) {
+                    
+                    //check size of last cluster
+                    if (cluster.size() == 0) clusters[0].push_back(p_new);
+                    else {
+                        clusters[0].insert(clusters[0].end(),cluster.begin(),cluster.end());
+                        cluster.clear();
+                    }
+                }
             }
-            j++;
-        }  
+        }
+
     }
-
-    //loop closure
-    if (clusters[0].size()+clusters[j].size() > 2 && flag == true && flag2 == true)
-    {
-        clusters[j].insert(clusters[j].end(),clusters[0].begin(),clusters[0].end());
-        clusters[0].clear();
-    }
-
-    publishClusters(clusters,ls->ranges.size());
-
+    
+    publishClusters(clusters);
     return;
 }
 
