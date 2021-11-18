@@ -16,6 +16,7 @@
 #include <nuslam/nuslam.hpp>
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/Marker.h>
+#include <armadillo>
 
 
 //Global variables
@@ -23,7 +24,7 @@ static const int frequency = 200;
 static double dist_thres;
 static ros::Publisher cluster_pub;
 
-void publishClusters(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
+void publishLandmarks(std::vector<rigid2d::Vector2D> & circles) {
     visualization_msgs::MarkerArray cluster_tubes;
 
     //cylinder orientation
@@ -40,7 +41,7 @@ void publishClusters(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
     col.b = 0;
     col.a = 1;
 
-    for(int i = 0; i < clusters.size(); i++)
+    for(int i = 0; i < circles.size(); i++)
     {
         visualization_msgs::Marker tube;
         geometry_msgs::Point pos;
@@ -51,14 +52,8 @@ void publishClusters(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
         tube.lifetime = ros::Duration(0.1);
 
         //set pose
-        rigid2d::Vector2D avg;
-        for(int j = 0; j < clusters[i].size(); j++)
-        {
-            avg += clusters[i][j];
-        }
-        avg = avg*(1.0/clusters[i].size());
-        pos.x = avg.x;
-        pos.y = avg.y;
+        pos.x = circles[i].x;
+        pos.y = circles[i].y;
         pos.z = 0;
         tube.pose.position = pos;
         tube.pose.orientation = rot;
@@ -76,6 +71,103 @@ void publishClusters(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
         cluster_tubes.markers.push_back(tube);
     }
     cluster_pub.publish(cluster_tubes);
+}
+
+void circleRegression(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
+    //store circle parameters
+    std::vector<rigid2d::Vector2D> circles;
+
+    for (int i=0; i<clusters.size(); i++) {
+        std::vector<rigid2d::Vector2D> cluster = clusters[i];
+        int n = cluster.size();
+
+        //compute means
+        double x_mean = 0;
+        double y_mean = 0;
+        for (int j=0; j<n; j++) {
+            x_mean += cluster[j].x;
+            y_mean += cluster[j].y;
+        }
+
+        //find centroid
+        double x_cen = x_mean/n;
+        double y_cen = y_mean/n;
+
+        //shift points so centroid is at origin
+        //compute z mean
+        double z_mean = 0;
+        std::vector<double> z_list;
+        std::vector<double> x_list;
+        std::vector<double> y_list;
+        for (int j=0; j<n; j++) {
+            x_list.push_back(cluster[j].x - x_cen);
+            y_list.push_back(cluster[j].y - y_cen);
+
+            double z_val = pow(x_list[j],2) + pow(y_list[j],2);
+            z_list.push_back(z_val);
+            z_mean += z_val;
+        }
+        double z_cen = z_mean/n;
+
+        //Form Z matrix
+        arma::mat col1(z_list);
+        arma::mat col2(x_list);
+        arma::mat col3(y_list);
+        arma::mat col4(n,1,arma::fill::ones);
+        arma::mat Z = arma::join_rows(col1,col2,col3,col4);
+
+        //Form momemt matrix
+        arma::mat M = (1/n)*arma::trans(Z)*Z;
+
+        //Form constraint matrix
+        arma::mat H = { {8*z_cen, 0, 0, 2},
+                        {0,       1, 0, 0},
+                        {0,       0, 1, 0},
+                        {2,       0, 0, 0} };
+        arma::mat Hinv = {  {0, 0, 0, 0.5},
+                            {0, 1, 0, 0},
+                            {0, 0, 1, 0},
+                            {0.5, 0, 0, -2*z_cen}  };
+
+        //SVD of Z
+        arma::mat U;
+        arma::vec s;
+        arma::mat V;
+        arma::svd(U,s,V,Z);
+
+        //Solve for A
+        arma::vec A;
+        if (s(3) < 1e-12) A = V.col(3); 
+        else {
+            arma::mat Y = V*arma::diagmat(s)*V.t();
+            arma::mat Q = Y*Hinv*Y;
+            arma::vec eigval;
+            arma::mat eigvec;
+            arma::eig_sym(eigval, eigvec, Q);
+
+            int index = 0;
+            double val = INT_MAX;
+            for (int i = 0; i<eigval.size();i++){
+                if (eigval[i]<val & eigval[i] > 0){
+                    val = eigval[i];
+                    index = i;
+                }
+            }
+
+            arma::vec Astar = eigvec.col(index);
+            A = arma::solve(Y,Astar);
+        }
+
+        // Calculate equation for circle
+        double a = -A(1)/(2*A(0))+x_cen;  //x center
+        double b = -A(2)/(2*A(0))+y_cen;  //y center
+        double R = sqrt((pow(A(1),2) + pow(A(2),2) -4*A(0)*A(3)) / (4*pow(A(0),2)));    //radius
+
+        // Ignore circles with large radii
+        if (R<0.1) circles.push_back(rigid2d::Vector2D(a,b));
+    }
+    publishLandmarks(circles);
+    return;
 }
 
 /// \brief subscriber callback that clusters laserscan data
@@ -104,7 +196,7 @@ void laserCallback(const sensor_msgs::LaserScanConstPtr &ls) {
 
         //not part of cluster
         else {
-            if (cluster.size() >= 3) clusters.push_back(cluster);
+            if (cluster.size() > 3) clusters.push_back(cluster);
             cluster.clear();
         }
 
@@ -131,7 +223,7 @@ void laserCallback(const sensor_msgs::LaserScanConstPtr &ls) {
 
     }
     
-    publishClusters(clusters);
+    circleRegression(clusters);
     return;
 }
 
@@ -139,8 +231,7 @@ void laserCallback(const sensor_msgs::LaserScanConstPtr &ls) {
 /// \param argc - initialization arguement
 /// \param argv - initialization arguement
 /// \return 0 at end of function
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     //start node
     ros::init(argc, argv, "landmarks");
     ros::NodeHandle nh;
