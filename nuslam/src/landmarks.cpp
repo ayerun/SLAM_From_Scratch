@@ -22,6 +22,11 @@
 //Global variables
 static const int frequency = 200;
 static double dist_thres;
+static double min_cluster_size;
+static double max_radius;
+static double max_angle_mean;
+static double min_angle_mean;
+static double min_standard_deviation;
 static ros::Publisher cluster_pub;
 
 void publishLandmarks(std::vector<rigid2d::Vector2D> & circles) {
@@ -96,7 +101,7 @@ void classifyCircles(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
         angle_mean /= angles.size();
 
         //remove clusters that exceed limits
-        if (angle_mean < 80 || angle_mean > 140) {
+        if (angle_mean < min_angle_mean || angle_mean > max_angle_mean) {
             clusters.erase(clusters.begin()+i);
             i--;
             continue;
@@ -110,7 +115,7 @@ void classifyCircles(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
         sd = sqrt(sd/angles.size());
 
         //remove clusters if standard deviation is too large
-        if (sd > 20) {
+        if (sd > min_standard_deviation) {
             clusters.erase(clusters.begin()+i);
             i--;
         }
@@ -208,7 +213,7 @@ void circleRegression(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
         double R = sqrt((pow(A(1),2) + pow(A(2),2) -4*A(0)*A(3)) / (4*pow(A(0),2)));    //radius
 
         // Ignore circles with large radii
-        if (R<0.1) circles.push_back(rigid2d::Vector2D(a,b));
+        if (R<max_radius) circles.push_back(rigid2d::Vector2D(a,b));
     }
     publishLandmarks(circles);
     return;
@@ -240,7 +245,7 @@ void laserCallback(const sensor_msgs::LaserScanConstPtr &ls) {
 
         //not part of cluster
         else {
-            if (cluster.size() > 3) clusters.push_back(cluster);
+            if (cluster.size() >= min_cluster_size) clusters.push_back(cluster);
             cluster.clear();
         }
 
@@ -266,6 +271,7 @@ void laserCallback(const sensor_msgs::LaserScanConstPtr &ls) {
         }
 
     }
+    
     classifyCircles(clusters);
     circleRegression(clusters);
     return;
@@ -284,7 +290,13 @@ int main(int argc, char** argv) {
     const ros::Subscriber laser_sub = nh.subscribe("fake_laser", 10, laserCallback);
     cluster_pub = nh.advertise<visualization_msgs::MarkerArray>("cluster_locations",10);
 
+    //get clustering parameters
     ros::param::get("/dist_thres", dist_thres);
+    ros::param::get("/min_cluster_size", min_cluster_size);
+    ros::param::get("/max_radius", max_radius);
+    ros::param::get("/max_angle_mean", max_angle_mean);
+    ros::param::get("/min_angle_mean", min_angle_mean);
+    ros::param::get("/min_standard_deviation", min_standard_deviation);
 
     ros::Rate r(frequency);
     while(ros::ok())
