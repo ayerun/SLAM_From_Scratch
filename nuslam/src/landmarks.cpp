@@ -29,6 +29,7 @@ static double min_angle_mean;
 static double min_standard_deviation;
 static ros::Publisher cluster_pub;
 
+/// \brief publishes a marker array at the locations of the detected tubes
 void publishLandmarks(std::vector<rigid2d::Vector2D> & circles) {
     visualization_msgs::MarkerArray cluster_tubes;
 
@@ -78,6 +79,7 @@ void publishLandmarks(std::vector<rigid2d::Vector2D> & circles) {
     cluster_pub.publish(cluster_tubes);
 }
 
+/// \brief removes clusters that do not follow the inscribed angle theorem
 void classifyCircles(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
     for (int i=0; i<clusters.size(); i++) {
         std::vector<rigid2d::Vector2D> cluster = clusters[i];
@@ -122,6 +124,7 @@ void classifyCircles(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
     }
 }
 
+/// \brief removes clusters that do not form a circle of the expected radius
 void circleRegression(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
     //store circle parameters
     std::vector<rigid2d::Vector2D> circles;
@@ -232,21 +235,24 @@ void laserCallback(const sensor_msgs::LaserScanConstPtr &ls) {
         rigid2d::Vector2D p_new = nuslam::rb2xy(ls->ranges[i],i);
         rigid2d::Vector2D p_old = nuslam::rb2xy(ls->ranges[i-1],i-1);
 
+        //cluster first point
+        if (cluster.size() == 0) cluster.push_back(p_old);
+
         //calculate distance
         double d = nuslam::dist(p_new,p_old);
 
         //part of cluster
-        if (d < dist_thres) {
-            if (i == 1) {
-                cluster.push_back(p_old);
-            }
-            cluster.push_back(p_new);
-        }
+        if (d < dist_thres) cluster.push_back(p_new);
 
         //not part of cluster
         else {
-            if (cluster.size() >= min_cluster_size) clusters.push_back(cluster);
+
+            //enforce cluster min size except when clusters vector is empty
+            if (cluster.size() >= min_cluster_size || clusters.size() == 0) clusters.push_back(cluster);
             cluster.clear();
+
+            //cluster last point
+            if (i+1 == ls->ranges.size()) cluster.push_back(p_new);
         }
 
         //loop closure
@@ -257,19 +263,18 @@ void laserCallback(const sensor_msgs::LaserScanConstPtr &ls) {
             if (first == nuslam::rb2xy(ls->ranges[0],0)) {
                 double d2 = nuslam::dist(p_new,first);
 
-                //cluster
+                //part of cluster
                 if (d2 < dist_thres) {
                     
-                    //check size of last cluster
-                    if (cluster.size() == 0) clusters[0].push_back(p_new);
-                    else {
-                        clusters[0].insert(clusters[0].end(),cluster.begin(),cluster.end());
-                        cluster.clear();
-                    }
+                    //combine clusters
+                    clusters[0].insert(clusters[0].begin(),cluster.begin(),cluster.end());
                 }
+                cluster.clear();
             }
-        }
 
+            //enforce cluster min size after closing loop
+            if (clusters[0].size() < min_cluster_size) clusters.erase(clusters.begin());
+        }
     }
     
     classifyCircles(clusters);
