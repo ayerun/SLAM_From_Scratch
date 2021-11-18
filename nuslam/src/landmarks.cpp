@@ -73,6 +73,50 @@ void publishLandmarks(std::vector<rigid2d::Vector2D> & circles) {
     cluster_pub.publish(cluster_tubes);
 }
 
+void classifyCircles(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
+    for (int i=0; i<clusters.size(); i++) {
+        std::vector<rigid2d::Vector2D> cluster = clusters[i];
+        rigid2d::Vector2D p_start = cluster[0];                 //start of cluster
+        rigid2d::Vector2D p_end = cluster[cluster.size()-1];    //end of cluster
+        std::vector<double> angles;                             //inscribed angles
+        double angle_mean = 0;                                  //mean of inscribed angles
+
+        for (int j=1; j<cluster.size()-1; j++) {
+
+            //make p2 the origin for p_start and p_end
+            rigid2d::Vector2D p2 = cluster[j];
+            rigid2d::Vector2D p1 = p_start-p2;
+            rigid2d::Vector2D p3 = p_end-p2;
+
+            //calculate inscribed angle
+            double ang = rigid2d::rad2deg(rigid2d::angle(p1,p3));
+            angles.push_back(ang);
+            angle_mean += ang;
+        }
+        angle_mean /= angles.size();
+
+        //remove clusters that exceed limits
+        if (angle_mean < 80 || angle_mean > 140) {
+            clusters.erase(clusters.begin()+i);
+            i--;
+            continue;
+        }
+
+        //calculate standard deviation
+        double sd = 0;
+        for (int j=0; j<angles.size(); j++) {
+            sd += pow(angles[j]-angle_mean,2);
+        }
+        sd = sqrt(sd/angles.size());
+
+        //remove clusters if standard deviation is too large
+        if (sd > 20) {
+            clusters.erase(clusters.begin()+i);
+            i--;
+        }
+    }
+}
+
 void circleRegression(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
     //store circle parameters
     std::vector<rigid2d::Vector2D> circles;
@@ -222,7 +266,7 @@ void laserCallback(const sensor_msgs::LaserScanConstPtr &ls) {
         }
 
     }
-    
+    classifyCircles(clusters);
     circleRegression(clusters);
     return;
 }

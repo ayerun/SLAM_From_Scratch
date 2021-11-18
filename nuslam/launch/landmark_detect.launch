@@ -8,7 +8,7 @@
         <include file="$(find nurtlesim)/launch/tube_world.launch" >
             <arg name="use_rviz" value="false" />
         </include>
-        <node name="landmarks" type="nuslam_landmarks" pkg="nuslam" />
+        <node name="landmarks" type="nuslam_landmarks" pkg="nuslam" output="screen"/>
         <node name="rviz" pkg="rviz" type="rviz" args="-d $(find nuslam)/config/circles.rviz"/>
     </group>
 

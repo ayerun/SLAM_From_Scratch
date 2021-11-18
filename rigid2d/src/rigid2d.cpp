@@ -28,6 +28,12 @@ namespace rigid2d
         return norm_v;
     }
 
+    double Vector2D::dot(const Vector2D & rhs) const
+    {
+        double dp = x*rhs.x+y*rhs.y;
+        return dp;
+    }
+
     Vector2D & Vector2D::operator*=(const double & rhs)
     {
         x = rhs*x;
@@ -168,6 +174,12 @@ namespace rigid2d
         }
 
         return ang;
+    }
+
+    double angle(const Vector2D v1, const Vector2D v2)
+    {
+        double theta = acos( (v1.dot(v2)) / (magnitude(v1)*magnitude(v2)) );
+        return theta;
     }
 
     Transform2D::Transform2D()

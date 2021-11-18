@@ -85,6 +85,10 @@ namespace rigid2d
         /// \return normalized vector
         Vector2D normalize() const;
 
+        /// \brief calculate dot product of 2 vectors
+        /// \returns dot product
+        double dot(const Vector2D & rhs) const;
+
         /// \brief scalar multiplication of a vector
         /// \param rhs - scalar
         /// \returns a reference to the newly scaled vector
@@ -153,6 +157,10 @@ namespace rigid2d
     /// \brief calculate angle of 2D vector
     /// \return angle of vector in radians
     double angle(const Vector2D & v);
+
+    /// \brief calculate angle between 2 vectors
+    /// \returns angle between vectors in radians
+    double angle(const Vector2D v1, const Vector2D v2);
 
     /// \brief A 2-Dimensional Twist
     struct Twist2D
