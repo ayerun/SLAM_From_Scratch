@@ -12,7 +12,7 @@ namespace nuslam
                             {0.0,0.0,0.0}};
         arma::mat sig2n3 = arma::mat(2*n,3,arma::fill::zeros);
         arma::mat sig32n = arma::mat(3,2*n,arma::fill::zeros);
-        arma::mat sig0m = 999999*arma::mat(2*n,2*n,arma::fill::eye);
+        arma::mat sig0m = INT_MAX*arma::mat(2*n,2*n,arma::fill::eye);
         auto joined_ab  = arma::join_cols(sig0q,sig2n3);
         auto joined_cd  = arma::join_cols(sig32n,sig0m);
         sigma = arma::join_rows(joined_ab,joined_cd);
@@ -26,6 +26,8 @@ namespace nuslam
               {0.0, 0.0, 0.1} };
         R = { {0.00001, 0},
               {0, 0.00001} };
+        
+        Qbar = this->calculateQbar();
     }
 
     ekf::ekf(int max_n)
@@ -38,7 +40,7 @@ namespace nuslam
                             {0.0,0.0,0.0}};
         arma::mat sig2n3 = arma::mat(2*n,3,arma::fill::zeros);
         arma::mat sig32n = arma::mat(3,2*n,arma::fill::zeros);
-        arma::mat sig0m = 999999*arma::mat(2*n,2*n,arma::fill::eye);
+        arma::mat sig0m = INT_MAX*arma::mat(2*n,2*n,arma::fill::eye);
         auto joined_ab  = arma::join_cols(sig0q,sig2n3);
         auto joined_cd  = arma::join_cols(sig32n,sig0m);
         sigma = arma::join_rows(joined_ab,joined_cd);
@@ -52,6 +54,8 @@ namespace nuslam
               {0.0, 0.0, 0.1} };
         R = { {0.00001, 0},
               {0, 0.00001} };
+
+        Qbar = this->calculateQbar();
     }
 
     ekf::ekf(int max_n, arma::mat Q_mat, arma::mat R_mat)
@@ -64,7 +68,7 @@ namespace nuslam
                             {0.0,0.0,0.0}};
         arma::mat sig2n3 = arma::mat(2*n,3,arma::fill::zeros);
         arma::mat sig32n = arma::mat(3,2*n,arma::fill::zeros);
-        arma::mat sig0m = 999999*arma::mat(2*n,2*n,arma::fill::eye);
+        arma::mat sig0m = INT_MAX*arma::mat(2*n,2*n,arma::fill::eye);
         auto joined_ab  = arma::join_cols(sig0q,sig2n3);
         auto joined_cd  = arma::join_cols(sig32n,sig0m);
         sigma = arma::join_rows(joined_ab,joined_cd);
@@ -75,6 +79,8 @@ namespace nuslam
         //covariances
         Q = Q_mat;
         R = R_mat;
+
+        Qbar = this->calculateQbar();
     }
 
     arma::mat ekf::calculateA(rigid2d::Twist2D ut)
@@ -124,7 +130,6 @@ namespace nuslam
     {
         //predict uncertainty
         arma::mat A = this->calculateA(ut);
-        arma::mat Qbar = this->calculateQbar();
         arma::mat sigma_estimate = A*sigma*A.t()+Qbar;
         sigma = sigma_estimate;
 
