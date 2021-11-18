@@ -81,6 +81,7 @@ namespace nuslam
         arma::mat state;            //system state estimate based on filter (robot location & landmarks)
         arma::mat state_odom;       //system state based on odometry (robot location & landmarks)
         arma::mat Q;                //process noise covariance matrix
+        arma::mat Qbar;             //process noise for robot motion model, expanding to fill the whole state
         arma::mat R;                //sensor noise covariance matrix
     };
 

@@ -223,9 +223,9 @@ void broadcast_map2odom()
     br2.sendTransform(trans2);
 }
 
-/// \brief implements slam using fake data
+/// \brief implements slam using fake data with known data association
 /// \param data - fake data for slam
-void sensorCallback(const visualization_msgs::MarkerArrayPtr &data)
+void fakeSensorCallback(const visualization_msgs::MarkerArrayPtr &data)
 {
     static std::unordered_map<int,int> hash;    //landmark initialization map
     
@@ -274,7 +274,7 @@ int main(int argc, char** argv)
 
     //initialize subscribers and publishers
     js_sub = nh.subscribe("joint_states", 10, jsCallback);
-    const ros::Subscriber sensor_sub = nh.subscribe("fake_sensor", 10, sensorCallback);
+    const ros::Subscriber sensor_sub = nh.subscribe("fake_sensor", 10, fakeSensorCallback);
     pub = nh.advertise<nav_msgs::Odometry>("odom", 10);
     path_odom_pub = nh.advertise<nav_msgs::Path>("odom_path", 10);
     path_slam_pub = nh.advertise<nav_msgs::Path>("slam_path", 10);

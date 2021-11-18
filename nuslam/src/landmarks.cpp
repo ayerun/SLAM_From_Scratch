@@ -4,7 +4,7 @@
 /// PARAMETERS:
 ///     dist_thres: distance threshold for consecutive lidar measurements in a cluster
 /// PUBLISHES:
-///    /cluster_locations (visualization_msgs/MarkerArray): markers at locations of clustered data
+///     /cluster_locations (visualization_msgs/MarkerArray): markers at locations of clustered data
 /// SUBSCRIBES:
 ///     /fake_laser (sensor_msgs/LaserScan): fake lidar data
 /// SERVICES:
@@ -27,7 +27,7 @@ static double max_radius;
 static double max_angle_mean;
 static double min_angle_mean;
 static double min_standard_deviation;
-static ros::Publisher cluster_pub;
+static ros::Publisher landmark_pub;
 
 /// \brief publishes a marker array at the locations of the detected tubes
 void publishLandmarks(std::vector<rigid2d::Vector2D> & circles) {
@@ -76,7 +76,7 @@ void publishLandmarks(std::vector<rigid2d::Vector2D> & circles) {
 
         cluster_tubes.markers.push_back(tube);
     }
-    cluster_pub.publish(cluster_tubes);
+    landmark_pub.publish(cluster_tubes);
 }
 
 /// \brief removes clusters that do not follow the inscribed angle theorem
@@ -142,8 +142,8 @@ void circleRegression(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
         }
 
         //find centroid
-        double x_cen = x_mean/n;
-        double y_cen = y_mean/n;
+        x_mean = x_mean/n;
+        y_mean = y_mean/n;
 
         //shift points so centroid is at origin
         //compute z mean
@@ -152,14 +152,14 @@ void circleRegression(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
         std::vector<double> x_list;
         std::vector<double> y_list;
         for (int j=0; j<n; j++) {
-            x_list.push_back(cluster[j].x - x_cen);
-            y_list.push_back(cluster[j].y - y_cen);
+            x_list.push_back(cluster[j].x - x_mean);
+            y_list.push_back(cluster[j].y - y_mean);
 
             double z_val = pow(x_list[j],2) + pow(y_list[j],2);
             z_list.push_back(z_val);
             z_mean += z_val;
         }
-        double z_cen = z_mean/n;
+        z_mean = z_mean/n;
 
         //Form Z matrix
         arma::mat col1(z_list);
@@ -172,14 +172,14 @@ void circleRegression(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
         arma::mat M = (1/n)*arma::trans(Z)*Z;
 
         //Form constraint matrix
-        arma::mat H = { {8*z_cen, 0, 0, 2},
+        arma::mat H = { {8*z_mean, 0, 0, 2},
                         {0,       1, 0, 0},
                         {0,       0, 1, 0},
                         {2,       0, 0, 0} };
         arma::mat Hinv = {  {0, 0, 0, 0.5},
                             {0, 1, 0, 0},
                             {0, 0, 1, 0},
-                            {0.5, 0, 0, -2*z_cen}  };
+                            {0.5, 0, 0, -2*z_mean}  };
 
         //SVD of Z
         arma::mat U;
@@ -211,8 +211,8 @@ void circleRegression(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
         }
 
         // Calculate equation for circle
-        double a = -A(1)/(2*A(0))+x_cen;  //x center
-        double b = -A(2)/(2*A(0))+y_cen;  //y center
+        double a = -A(1)/(2*A(0))+x_mean;  //x center
+        double b = -A(2)/(2*A(0))+y_mean;  //y center
         double R = sqrt((pow(A(1),2) + pow(A(2),2) -4*A(0)*A(3)) / (4*pow(A(0),2)));    //radius
 
         // Ignore circles with large radii
@@ -293,7 +293,7 @@ int main(int argc, char** argv) {
 
     //initialize publishers and subscribers
     const ros::Subscriber laser_sub = nh.subscribe("fake_laser", 10, laserCallback);
-    cluster_pub = nh.advertise<visualization_msgs::MarkerArray>("cluster_locations",10);
+    landmark_pub = nh.advertise<visualization_msgs::MarkerArray>("sensed_landmarks",10);
 
     //get clustering parameters
     ros::param::get("/dist_thres", dist_thres);

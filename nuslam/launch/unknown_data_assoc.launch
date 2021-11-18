@@ -1,0 +1,26 @@
+<launch>
+    <arg name="robot" default="localhost" doc="robot to use"/>
+
+    <node name="teleop" pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" />
+    <node name="slam" pkg="nuslam" type="nuslam_slam" />
+
+    <!-- simulation -->
+    <group if="$(eval arg('robot') == 'localhost')" >
+        <node name="tube_world" pkg="nurtlesim" type="nurtlesim_tube_world" />
+        <include file="$(find nuturtle_description)/launch/load.launch" />
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find nuslam)/config/slam.rviz" />
+    </group>
+
+    <!-- parameters for nodes -->
+    <rosparam param="wheel_base">0.16</rosparam>
+    <rosparam param="wheel_radius">0.033</rosparam>
+    <rosparam param="left_wheel_joint">wheel_left_joint</rosparam>
+    <rosparam param="right_wheel_joint">wheel_right_joint</rosparam>
+    <rosparam param="odom_frame_id">odom</rosparam>
+    <rosparam param="body_frame_id">base_footprint</rosparam>
+    <rosparam file="$(find nurtlesim)/config/simulation_params.yaml"/>
+
+    <!-- transform broadcasters -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="world2map" args="0 0 0 0 0 0 1 world map" />
+
+</launch>
