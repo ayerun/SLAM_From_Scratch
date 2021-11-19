@@ -3,6 +3,7 @@
 
     <node name="teleop" pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" />
     <node name="slam" pkg="nuslam" type="nuslam_slam" />
+    <node name="landmarks" pkg="nuslam" type="nuslam_landmarks" launch-prefix="gdb --args" output="screen"/>
 
     <!-- simulation -->
     <group if="$(eval arg('robot') == 'localhost')" >
@@ -18,6 +19,7 @@
     <rosparam param="right_wheel_joint">wheel_right_joint</rosparam>
     <rosparam param="odom_frame_id">odom</rosparam>
     <rosparam param="body_frame_id">base_footprint</rosparam>
+    <rosparam param="data_association">true</rosparam>
     <rosparam file="$(find nurtlesim)/config/simulation_params.yaml"/>
 
     <!-- transform broadcasters -->

@@ -240,7 +240,7 @@ void fakeSensorCallback(const visualization_msgs::MarkerArrayPtr &data)
 
         // convert measurement to polar
         rigid2d::Vector2D location = rigid2d::Vector2D(measurement.pose.position.x,measurement.pose.position.y);
-        arma::mat z = nuslam::convert_polar(location);
+        arma::mat z = nuslam::toPolar(location);
 
         // get id
         int j = measurement.id+1;
@@ -262,6 +262,44 @@ void fakeSensorCallback(const visualization_msgs::MarkerArrayPtr &data)
     Tmap_robot = rigid2d::Transform2D(pos,0);
 }
 
+/// \brief implements slam using fake data with known data association
+/// \param data - fake data for slam
+void sensorCallback(const visualization_msgs::MarkerArrayPtr &data)
+{
+    static std::unordered_map<int,int> hash;    //landmark initialization map
+    
+    //predict
+    filter.predict(Vb,dd.getTransform());
+
+    //update loop
+    for(int i = 0; i < data->markers.size(); i++)
+    {
+        visualization_msgs::Marker measurement = data->markers[i];
+
+        // convert measurement to polar
+        rigid2d::Vector2D location = rigid2d::Vector2D(measurement.pose.position.x,measurement.pose.position.y);
+        arma::mat z = nuslam::toPolar(location);
+
+        int j = filter.associateData(z);
+
+        if (j<0) {
+            continue;
+        }
+
+        if (hash.find(j) == hash.end()) {
+            hash[j] = 1;
+            filter.initialize_landmark(j,location);
+        }
+
+        filter.update(z,j);
+
+    }
+
+    // find transform from map to robot
+    rigid2d::Vector2D pos = rigid2d::Vector2D(filter.getState()(1,0),filter.getState()(2,0));
+    Tmap_robot = rigid2d::Transform2D(pos,0);
+}
+
 /// \brief initializes node, subscriber, publisher, parameters, and objects
 /// \param argc - initialization arguement
 /// \param argv - initialization arguement
@@ -272,12 +310,7 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "odometer");
     ros::NodeHandle nh;
 
-    //initialize subscribers and publishers
-    js_sub = nh.subscribe("joint_states", 10, jsCallback);
-    const ros::Subscriber sensor_sub = nh.subscribe("fake_sensor", 10, fakeSensorCallback);
-    pub = nh.advertise<nav_msgs::Odometry>("odom", 10);
-    path_odom_pub = nh.advertise<nav_msgs::Path>("odom_path", 10);
-    path_slam_pub = nh.advertise<nav_msgs::Path>("slam_path", 10);
+    bool data_association;
 
     //get parameters
     ros::param::get("/odom_frame_id", odom_frame_id);
@@ -286,10 +319,17 @@ int main(int argc, char** argv)
     ros::param::get("/right_wheel_joint", right_wheel_joint);
     ros::param::get("/wheel_base", base);
     ros::param::get("/wheel_radius", radius);
-
-    //change to try to get
     ros::param::get("/tube_coordinates_x", tube_coordinates_x);
     ros::param::get("/tube_coordinates_y", tube_coordinates_y);
+    ros::param::get("/data_association",data_association);
+
+    //initialize subscribers and publishers
+    js_sub = nh.subscribe("joint_states", 10, jsCallback);
+    pub = nh.advertise<nav_msgs::Odometry>("odom", 10);
+    path_odom_pub = nh.advertise<nav_msgs::Path>("odom_path", 10);
+    path_slam_pub = nh.advertise<nav_msgs::Path>("slam_path", 10);
+    if (data_association) const ros::Subscriber lidar_sub = nh.subscribe("sensed_landmarks", 10, sensorCallback);
+    else const ros::Subscriber fake_sensor_sub = nh.subscribe("fake_sensor", 10, fakeSensorCallback);
 
     filter = nuslam::ekf(tube_coordinates_x.size());
 
