@@ -220,6 +220,68 @@ namespace nuslam
         state(2*j+2,0) = location.y;
     }
 
+    arma::mat ekf::calculateH2(int j, arma::mat temp) {
+        rigid2d::Vector2D d;
+        arma::mat H;
+        if (j>=n) {
+            d.x = temp(3+2*j)-temp(1);
+            d.y = temp(4+2*j)-temp(2);
+
+            H = arma::mat(2,3+2*(n+1),arma::fill::zeros);
+        }
+        else {
+            d.x = state(3+2*j) - state(1);
+            d.y = state(4+2*j) - state(2);
+
+            H = arma::mat(2,3+2*n,arma::fill::zeros);
+        }
+
+        double d_mag = rigid2d::magnitude(d);
+
+        H(0,1) = -d.x/d_mag;
+        H(0,2) = -d.y/d_mag;
+        H(0,3+2*j) = d.x/d_mag;
+        H(0,4+2*j) = d.y/d_mag;
+        H(1,0) = -1;
+        H(1,1) = d.y/pow(d_mag,2);
+        H(1,2) = -d.x/pow(d_mag,2);
+        H(1,3+2*j) = -d.y/pow(d_mag,2);
+        H(1,4+2*j) = d.x/pow(d_mag,2);
+
+        return H;
+    }
+
+    int ekf::associateData(arma::mat z) {
+        arma::mat temp(3+2*(N+1),1);
+        double thresh = 65;
+        double limit = 0.01;
+
+        if (N == 0){
+            return N++;
+        }
+
+        temp(arma::span(0,2+2*N),0) = state(arma::span(0,2+2*N),0);
+        temp(3+2*N) = temp(1) + z(0)*cos(z(1) + temp(0));
+        temp(4+2*N) = temp(2) + z(0)*sin(z(1) + temp(0));
+
+        for (int i = 0; i<N; i++){
+            arma::mat H = calculateH2(i,temp);
+            arma::mat cov = H*sigma*H.t() + R;
+            arma::mat zhat = calculatezhat(i);
+            arma::mat dkmat = (z-zhat).t() * cov.i() * (z-zhat);
+            double dk = dkmat(0);
+
+            if (dk < thresh & dk < limit){
+                return i;
+            } else if (dk < thresh && dk > limit){
+                return -1;
+            }
+
+        }
+
+        return N++;
+    }
+
     int ekf::getN()
     {
         return n;
@@ -245,7 +307,7 @@ namespace nuslam
         return R;
     }
 
-    arma::mat convert_polar(rigid2d::Vector2D point)
+    arma::mat toPolar(rigid2d::Vector2D point)
     {
         double r = sqrt(pow(point.x,2)+pow(point.y,2));
         double phi = atan2(point.y,point.x);
@@ -255,7 +317,7 @@ namespace nuslam
         return z;
     }
 
-    rigid2d::Vector2D rb2xy(const double r, const double b)
+    rigid2d::Vector2D toCartesian(const double r, const double b)
     {
         double b_rad = rigid2d::deg2rad(b);
         rigid2d::Vector2D p;

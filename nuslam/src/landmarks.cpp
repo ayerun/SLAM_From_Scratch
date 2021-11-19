@@ -232,8 +232,8 @@ void laserCallback(const sensor_msgs::LaserScanConstPtr &ls) {
     for (int i=1; i<ls->ranges.size(); i++) {
         
         //convert to xy
-        rigid2d::Vector2D p_new = nuslam::rb2xy(ls->ranges[i],i);
-        rigid2d::Vector2D p_old = nuslam::rb2xy(ls->ranges[i-1],i-1);
+        rigid2d::Vector2D p_new = nuslam::toCartesian(ls->ranges[i],i);
+        rigid2d::Vector2D p_old = nuslam::toCartesian(ls->ranges[i-1],i-1);
 
         //cluster first point
         if (cluster.size() == 0) cluster.push_back(p_old);
@@ -260,7 +260,7 @@ void laserCallback(const sensor_msgs::LaserScanConstPtr &ls) {
             rigid2d::Vector2D first = clusters[0][0];           //first clustered point
 
             //ensure first clustered point is first point in laser scan
-            if (first == nuslam::rb2xy(ls->ranges[0],0)) {
+            if (first == nuslam::toCartesian(ls->ranges[0],0)) {
                 double d2 = nuslam::dist(p_new,first);
 
                 //part of cluster

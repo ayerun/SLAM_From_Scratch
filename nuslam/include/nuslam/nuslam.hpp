@@ -53,6 +53,10 @@ namespace nuslam
 
         void initialize_landmark(int j, rigid2d::Vector2D location);
 
+        arma::mat calculateH2(int j, arma::mat temp);
+
+        int associateData(arma::mat z);
+
         /// \brief accessor function
         /// \returns n
         int getN();
@@ -83,18 +87,19 @@ namespace nuslam
         arma::mat Q;                //process noise covariance matrix
         arma::mat Qbar;             //process noise for robot motion model, expanding to fill the whole state
         arma::mat R;                //sensor noise covariance matrix
+        int N = 0;                  //number of observed landmarks
     };
 
     /// \brief convert xy coordinates to range-bearing
     /// \param point - xy coordinate
     /// \returns range bearing coordinates
-    arma::mat convert_polar(rigid2d::Vector2D point);
+    arma::mat toPolar(rigid2d::Vector2D point);
 
     /// \brief convert range bearing coordinates to xy
     /// \param r - range
     /// \param b - bearing
     /// \returns xy point
-    rigid2d::Vector2D rb2xy(const double r, const double b);
+    rigid2d::Vector2D toCartesian(const double r, const double b);
 
     /// \brief calculate the distance between 2 ponts
     /// \param p1 - point 1

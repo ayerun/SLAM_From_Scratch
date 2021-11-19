@@ -2,7 +2,6 @@
     <arg name="simulate" default="true" doc="launch simulation"/>
     <arg name="robot" default="apollo.local" doc="robot address"/>
     <rosparam file="$(find nuslam)/config/clustering_params.yaml"/>
-    <!-- <rosparam param="dist_thres">0.06</rosparam> -->
 
     <!-- simulation -->
     <group if="$(arg simulate)">
