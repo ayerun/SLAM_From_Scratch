@@ -1,16 +1,19 @@
 <launch>
     <arg name="simulate" default="true" doc="launch simulation"/>
     <arg name="robot" default="apollo.local" doc="robot address"/>
+    <arg name="debug" default="false" doc="launch with gdb" />
     <rosparam file="$(find nuslam)/config/clustering_params.yaml"/>
-    <!-- <rosparam param="dist_thres">0.06</rosparam> -->
 
     <!-- simulation -->
     <group if="$(arg simulate)">
         <include file="$(find nurtlesim)/launch/tube_world.launch" >
             <arg name="use_rviz" value="false" />
+            <arg if="$(arg debug)" name="use_teleop" value="false" />
         </include>
-        <node name="landmarks" type="nuslam_landmarks" pkg="nuslam" output="screen"/>
         <node name="rviz" pkg="rviz" type="rviz" args="-d $(find nuslam)/config/circles.rviz"/>
+        
+        <node if="$(arg debug)" name="landmarks" type="nuslam_landmarks" pkg="nuslam" launch-prefix="gdb" output="screen"/>
+        <node unless="$(arg debug)" name="landmarks" type="nuslam_landmarks" pkg="nuslam" />
     </group>
 
     <!-- real deal -->

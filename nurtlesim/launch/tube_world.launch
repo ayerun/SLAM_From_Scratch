@@ -1,12 +1,13 @@
 <launch>
     <arg name="use_rviz" default="true" doc="launch rviz"/>
+    <arg name="use_teleop" default="true" doc="launch teleop node" />
 
     <!-- visualize apollo -->
     <include file="$(find nuturtle_description)/launch/load.launch" />
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find nurtlesim)/config/sim.rviz" if="$(arg use_rviz)"/>
 
     <!-- launch nodes -->
-    <node name="teleop" pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" />
+    <node if="$(arg use_teleop)" name="teleop" pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" />
     <node name="odometer" pkg="rigid2d" type="rigid2d_odometer" />
     <node name="tube_world" pkg="nurtlesim" type="nurtlesim_tube_world"/>
 

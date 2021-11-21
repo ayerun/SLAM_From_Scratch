@@ -81,6 +81,7 @@ void publishLandmarks(std::vector<rigid2d::Vector2D> & circles) {
 
 /// \brief removes clusters that do not follow the inscribed angle theorem
 void classifyCircles(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
+    // std::cout << clusters[0].size() << std::endl;
     for (int i=0; i<clusters.size(); i++) {
         std::vector<rigid2d::Vector2D> cluster = clusters[i];
         rigid2d::Vector2D p_start = cluster[0];                 //start of cluster
@@ -229,17 +230,21 @@ void laserCallback(const sensor_msgs::LaserScanConstPtr &ls) {
     std::vector<std::vector<rigid2d::Vector2D>> clusters;     //array of vectors containing (x,y) coordinates
     std::vector<rigid2d::Vector2D> cluster;
 
-    for (int i=1; i<ls->ranges.size(); i++) {
+    for (int i=2; i<ls->ranges.size(); i++) {
+
+        //get ranges
+        double r_new = ls->ranges[i];
+        double r_old = ls->ranges[i-1];
         
         //convert to xy
-        rigid2d::Vector2D p_new = nuslam::rb2xy(ls->ranges[i],i);
-        rigid2d::Vector2D p_old = nuslam::rb2xy(ls->ranges[i-1],i-1);
+        rigid2d::Vector2D p_new = nuslam::rb2xy(r_new,i);
+        rigid2d::Vector2D p_old = nuslam::rb2xy(r_old,i-1);
 
         //cluster first point
         if (cluster.size() == 0) cluster.push_back(p_old);
 
         //calculate distance
-        double d = nuslam::dist(p_new,p_old);
+        double d = abs(r_new-r_old);
 
         //part of cluster
         if (d < dist_thres) cluster.push_back(p_new);
@@ -258,19 +263,23 @@ void laserCallback(const sensor_msgs::LaserScanConstPtr &ls) {
         //loop closure
         if (i+1 == ls->ranges.size()) {
             rigid2d::Vector2D first = clusters[0][0];           //first clustered point
+            double r_first = ls->ranges[1];
 
             //ensure first clustered point is first point in laser scan
-            if (first == nuslam::rb2xy(ls->ranges[0],0)) {
-                double d2 = nuslam::dist(p_new,first);
+            if (first == nuslam::rb2xy(r_first,1)) {
+                double d2 = abs(r_new-r_first);
 
                 //part of cluster
                 if (d2 < dist_thres) {
                     
                     //combine clusters
                     clusters[0].insert(clusters[0].begin(),cluster.begin(),cluster.end());
+                    cluster.clear();
                 }
-                cluster.clear();
             }
+
+            //add last cluster to clusters if it meets size constraint
+            if (cluster.size() >= min_cluster_size) clusters.push_back(cluster);
 
             //enforce cluster min size after closing loop
             if (clusters[0].size() < min_cluster_size) clusters.erase(clusters.begin());
