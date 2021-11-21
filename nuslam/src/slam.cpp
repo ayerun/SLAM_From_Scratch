@@ -293,8 +293,13 @@ void sensorCallback(const visualization_msgs::MarkerArrayPtr &data)
         }
         else if (hash.find(j) == hash.end()) {
             hash[j] = 1;
-            rigid2d::Vector2D turtle_loc = rigid2d::Vector2D(Tmap_robot.getX(),Tmap_robot.getY());
-            filter.initialize_landmark(j,turtle_loc);
+
+            //calculate landmark location in map coordinates
+            rigid2d::Vector2D robot_pos(filter.getState()(1,0),filter.getState()(2,0));
+            rigid2d::Transform2D Tmr(robot_pos,filter.getState()(0,0));
+            rigid2d::Vector2D landmark_loc = Tmr(location);
+
+            filter.initialize_landmark(j,landmark_loc);
         }
 
         filter.update(z,j);
