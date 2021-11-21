@@ -18,6 +18,7 @@
     <rosparam param="right_wheel_joint">wheel_right_joint</rosparam>
     <rosparam param="odom_frame_id">odom</rosparam>
     <rosparam param="body_frame_id">base_footprint</rosparam>
+    <rosparam param="data_association">false</rosparam>
     <rosparam file="$(find nurtlesim)/config/simulation_params.yaml"/>
 
     <!-- transform broadcasters -->

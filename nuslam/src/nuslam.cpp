@@ -151,6 +151,18 @@ namespace nuslam
         rigid2d::Vector2D d_norm = d.normalize();
         double d_mag = pow(d.x,2)+pow(d.y,2);
 
+        // arma::mat H = arma::mat(2,3+2*n,arma::fill::zeros);
+
+        // H(0,1) = -d.x/d_mag;
+        // H(0,2) = -d.y/d_mag;
+        // H(0,3+2*j) = d.x/d_mag;
+        // H(0,4+2*j) = d.y/d_mag;
+        // H(1,0) = -1;
+        // H(1,1) = d.y/pow(d_mag,2);
+        // H(1,2) = -d.x/pow(d_mag,2);
+        // H(1,3+2*j) = -d.y/pow(d_mag,2);
+        // H(1,4+2*j) = d.x/pow(d_mag,2);
+
         arma::mat A;
         arma::mat B;
         arma::mat C;
@@ -271,15 +283,16 @@ namespace nuslam
             arma::mat dkmat = (z-zhat).t() * cov.i() * (z-zhat);
             double dk = dkmat(0);
 
-            if (dk < thresh & dk < limit){
+            if (dk < thresh && dk < limit){
                 return i;
             } else if (dk < thresh && dk > limit){
-                return -1;
+                return -2;
             }
 
         }
 
-        return N++;
+        if (N < n) return N++;
+        else return -2;
     }
 
     int ekf::getN()

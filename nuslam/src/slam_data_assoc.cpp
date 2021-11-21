@@ -224,45 +224,6 @@ void broadcast_map2odom()
     br2.sendTransform(trans2);
 }
 
-/// \brief implements slam using fake data with known data association
-/// \param data - fake data for slam
-void fakeSensorCallback(const visualization_msgs::MarkerArrayPtr &data)
-{
-    static std::unordered_map<int,int> hash;    //landmark initialization map
-    
-    //predict
-    filter.predict(Vb,dd.getTransform());
-
-    //update loop
-    int len = data->markers.size();
-    for(int i = 0; i < len; i++)
-    {
-        visualization_msgs::Marker measurement = data->markers[i];
-
-        // convert measurement to polar
-        rigid2d::Vector2D location = rigid2d::Vector2D(measurement.pose.position.x,measurement.pose.position.y);
-        arma::mat z = nuslam::toPolar(location);
-
-        // get id
-        int j = measurement.id+1;
-
-        //initialize landmark
-        if (hash.find(j) == hash.end())
-        {
-            hash[j] = 1;
-            rigid2d::Vector2D turtle_loc = rigid2d::Vector2D(Tmap_robot.getX(),Tmap_robot.getY());
-            filter.initialize_landmark(j,location+turtle_loc);
-        }
-
-        //update
-        filter.update(z,j);
-    }
-
-    // find transform from map to robot
-    rigid2d::Vector2D pos = rigid2d::Vector2D(filter.getState()(1,0),filter.getState()(2,0));
-    Tmap_robot = rigid2d::Transform2D(pos,0);
-}
-
 /// \brief implements slam using fake data with unknown data association
 /// \param data - fake data for slam
 void sensorCallback(const visualization_msgs::MarkerArrayPtr &data)
@@ -283,10 +244,11 @@ void sensorCallback(const visualization_msgs::MarkerArrayPtr &data)
 
         int j = filter.associateData(z)+1;
 
-        if (j<0) {
+        if (j<0 || j>filter.getN()) {
             continue;
         }
-        else if (hash.find(j) == hash.end()) {
+        
+        if (hash.find(j) == hash.end()) {
             hash[j] = 1;
             rigid2d::Vector2D turtle_loc = rigid2d::Vector2D(Tmap_robot.getX(),Tmap_robot.getY());
             filter.initialize_landmark(j,turtle_loc);
@@ -329,10 +291,10 @@ int main(int argc, char** argv)
     pub = nh.advertise<nav_msgs::Odometry>("odom", 10);
     path_odom_pub = nh.advertise<nav_msgs::Path>("odom_path", 10);
     path_slam_pub = nh.advertise<nav_msgs::Path>("slam_path", 10);
-    const ros::Subscriber fake_sensor_sub = nh.subscribe("fake_sensor", 10, fakeSensorCallback);
+    const ros::Subscriber fake_sensor_sub = nh.subscribe("sensed_landmarks", 10, sensorCallback);
 
 
-    filter = nuslam::ekf(tube_coordinates_x.size());
+    filter = nuslam::ekf(tube_coordinates_x.size()+5);
 
     //initialize differential drive object
     dd = rigid2d::DiffDrive(base,radius);

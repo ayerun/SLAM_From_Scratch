@@ -1,15 +1,24 @@
 <launch>
     <arg name="robot" default="localhost" doc="robot to use"/>
+    <arg name="debug" default="false" doc="launch without teleop with gdb" />
 
-    <node name="teleop" pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" />
-    <node name="slam" pkg="nuslam" type="nuslam_slam" />
-    <node name="landmarks" pkg="nuslam" type="nuslam_landmarks" launch-prefix="gdb --args" output="screen"/>
+    <group if="$(arg debug)">
+        <node name="slam_data_assoc" pkg="nuslam" type="nuslam_slam_data_assoc" launch-prefix="gdb --args" output="screen" />
+        <!-- <node name="landmarks" pkg="nuslam" type="nuslam_landmarks" launch-prefix="gdb args" output="screen"/> -->
+        <node name="landmarks" pkg="nuslam" type="nuslam_landmarks"/>
+    </group>
 
+    <group unless="$(arg debug)">
+        <node name="teleop" pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" />
+        <node name="slam_data_assoc" pkg="nuslam" type="nuslam_slam_data_assoc" />
+        <node name="landmarks" pkg="nuslam" type="nuslam_landmarks"/>
+    </group>
+    
     <!-- simulation -->
     <group if="$(eval arg('robot') == 'localhost')" >
         <node name="tube_world" pkg="nurtlesim" type="nurtlesim_tube_world" />
         <include file="$(find nuturtle_description)/launch/load.launch" />
-        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find nuslam)/config/slam.rviz" />
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find nuslam)/config/unknown_data_assoc_slam.rviz" />
     </group>
 
     <!-- parameters for nodes -->
@@ -21,6 +30,8 @@
     <rosparam param="body_frame_id">base_footprint</rosparam>
     <rosparam param="data_association">true</rosparam>
     <rosparam file="$(find nurtlesim)/config/simulation_params.yaml"/>
+    <rosparam file="$(find nuslam)/config/clustering_params.yaml"/>
+
 
     <!-- transform broadcasters -->
     <node pkg="tf2_ros" type="static_transform_publisher" name="world2map" args="0 0 0 0 0 0 1 world map" />
