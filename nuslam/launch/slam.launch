@@ -1,8 +1,15 @@
 <launch>
     <arg name="robot" default="localhost" doc="robot to use"/>
+    <arg name="debug" default="false" doc="launch without teleop with gdb" />
 
-    <node name="teleop" pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" />
-    <node name="slam" pkg="nuslam" type="nuslam_slam" />
+    <group if="$(arg debug)">
+        <node name="slam" pkg="nuslam" type="nuslam_slam" launch-prefix="gdb --args" output="screen" />
+    </group>
+
+    <group unless="$(arg debug)">
+        <!-- <node name="teleop" pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" /> -->
+        <node name="slam" pkg="nuslam" type="nuslam_slam" output="screen"/>
+    </group>
 
     <!-- simulation -->
     <group if="$(eval arg('robot') == 'localhost')" >

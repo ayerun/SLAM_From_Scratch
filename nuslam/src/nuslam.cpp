@@ -236,14 +236,14 @@ namespace nuslam
         rigid2d::Vector2D d;
         arma::mat H;
         if (j>=n) {
-            d.x = temp(3+2*j)-temp(1);
-            d.y = temp(4+2*j)-temp(2);
+            d.x = temp(1+2*j)-temp(1);
+            d.y = temp(2+2*j)-temp(2);
 
             H = arma::mat(2,3+2*(n+1),arma::fill::zeros);
         }
         else {
-            d.x = state(3+2*j) - state(1);
-            d.y = state(4+2*j) - state(2);
+            d.x = state(1+2*j) - state(1);
+            d.y = state(2+2*j) - state(2);
 
             H = arma::mat(2,3+2*n,arma::fill::zeros);
         }
