@@ -81,7 +81,6 @@ void publishLandmarks(std::vector<rigid2d::Vector2D> & circles) {
 
 /// \brief removes clusters that do not follow the inscribed angle theorem
 void classifyCircles(std::vector<std::vector<rigid2d::Vector2D>> & clusters) {
-    // std::cout << clusters[0].size() << std::endl;
     for (int i=0; i<clusters.size(); i++) {
         std::vector<rigid2d::Vector2D> cluster = clusters[i];
         rigid2d::Vector2D p_start = cluster[0];                 //start of cluster
@@ -235,6 +234,14 @@ void laserCallback(const sensor_msgs::LaserScanConstPtr &ls) {
         //get ranges
         double r_new = ls->ranges[i];
         double r_old = ls->ranges[i-1];
+
+        if (r_new == 0 && i+1 != ls->ranges.size()) {
+            if (cluster.size() >= min_cluster_size) {
+                clusters.push_back(cluster);
+                cluster.clear();
+            }
+            continue;
+        }
         
         //convert to xy
         rigid2d::Vector2D p_new = nuslam::toCartesian(r_new,i);

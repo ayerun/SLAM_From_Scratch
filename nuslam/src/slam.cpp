@@ -195,7 +195,7 @@ void broadcast()
 void broadcast_map2odom()
 {
     //calculate transform
-    rigid2d::Transform2D Todom_robot = rigid2d::Transform2D(rigid2d::Vector2D(dd.getTransform().getX(),dd.getTransform().getY()),0);
+    rigid2d::Transform2D Todom_robot = rigid2d::Transform2D(rigid2d::Vector2D(dd.getTransform().getX(),dd.getTransform().getY()),dd.getTransform().getTheta());
     rigid2d::Transform2D Tmap_odom = Tmap_robot*Todom_robot.inv();
 
     //initialize
@@ -248,15 +248,14 @@ void fakeSensorCallback(const visualization_msgs::MarkerArrayPtr &data)
         //initialize landmark
         if (hash.find(j) == hash.end())
         {
+            //mark initialized
             hash[j] = 1;
 
             //calculate landmark location in map coordinates
-            rigid2d::Vector2D robot_pos(filter.getState()(1,0),filter.getState()(2,0));
-            rigid2d::Transform2D Tmr(robot_pos,filter.getState()(0,0));
-            rigid2d::Vector2D landmark_loc = Tmr(location);
+            rigid2d::Vector2D landmark_loc = Tmap_robot(location);
 
+            //initialize landmark in state vector
             filter.initialize_landmark(j,landmark_loc);
-            std::cout << filter.getState() << std::endl;
         }
 
         //update
@@ -265,50 +264,7 @@ void fakeSensorCallback(const visualization_msgs::MarkerArrayPtr &data)
 
     // find transform from map to robot
     rigid2d::Vector2D pos = rigid2d::Vector2D(filter.getState()(1,0),filter.getState()(2,0));
-    Tmap_robot = rigid2d::Transform2D(pos,0);
-}
-
-/// \brief implements slam using fake data with unknown data association
-/// \param data - fake data for slam
-void sensorCallback(const visualization_msgs::MarkerArrayPtr &data)
-{
-    static std::unordered_map<int,int> hash;    //landmark initialization map
-    
-    //predict
-    filter.predict(Vb,dd.getTransform());
-
-    //update loop
-    for(int i = 0; i < data->markers.size(); i++)
-    {
-        visualization_msgs::Marker measurement = data->markers[i];
-
-        // convert measurement to polar
-        rigid2d::Vector2D location = rigid2d::Vector2D(measurement.pose.position.x,measurement.pose.position.y);
-        arma::mat z = nuslam::toPolar(location);
-
-        int j = filter.associateData(z)+1;
-
-        if (j<0) {
-            continue;
-        }
-        else if (hash.find(j) == hash.end()) {
-            hash[j] = 1;
-
-            //calculate landmark location in map coordinates
-            rigid2d::Vector2D robot_pos(filter.getState()(1,0),filter.getState()(2,0));
-            rigid2d::Transform2D Tmr(robot_pos,filter.getState()(0,0));
-            rigid2d::Vector2D landmark_loc = Tmr(location);
-
-            filter.initialize_landmark(j,landmark_loc);
-        }
-
-        filter.update(z,j);
-
-    }
-
-    // find transform from map to robot
-    rigid2d::Vector2D pos = rigid2d::Vector2D(filter.getState()(1,0),filter.getState()(2,0));
-    Tmap_robot = rigid2d::Transform2D(pos,0);
+    Tmap_robot = rigid2d::Transform2D(pos,filter.getState()(0,0));
 }
 
 /// \brief initializes node, subscriber, publisher, parameters, and objects

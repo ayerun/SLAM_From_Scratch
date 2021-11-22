@@ -8,10 +8,10 @@ tube_coordinates_x: [1,1,-1,-1,0.7,0,0,-0.8,0.5,-0.5]
 tube_coordinates_y: [1,-1,1,-1,0,-0.8,0.7,0,0.5,-0.5]
 max_distance: 0.8
 range_min: 0.12
-range_max: 3.5
+range_max: 1
 angle_increment: 0.0175
 resolution: 1
-laser_var: 0.01
+laser_var: 0.00
 num_samples: 360
 boarder_length: 3
 boarder_width: 3

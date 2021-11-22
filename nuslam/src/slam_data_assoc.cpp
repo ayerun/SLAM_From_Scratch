@@ -195,8 +195,7 @@ void broadcast()
 void broadcast_map2odom()
 {
     //calculate transform
-    rigid2d::Transform2D Todom_robot = rigid2d::Transform2D(rigid2d::Vector2D(dd.getTransform().getX(),dd.getTransform().getY()),0);
-    // rigid2d::Transform2D Tmap_odom = Tmap_robot*(dd.getTransform().inv());
+    rigid2d::Transform2D Todom_robot = rigid2d::Transform2D(rigid2d::Vector2D(dd.getTransform().getX(),dd.getTransform().getY()),dd.getTransform().getTheta());
     rigid2d::Transform2D Tmap_odom = Tmap_robot*Todom_robot.inv();
 
     //initialize
@@ -244,14 +243,16 @@ void sensorCallback(const visualization_msgs::MarkerArrayPtr &data)
 
         int j = filter.associateData(z)+1;
 
+        // ignore false positives
         if (j<0 || j>filter.getN()) {
             continue;
         }
         
+        // initalize landmark
         if (hash.find(j) == hash.end()) {
             hash[j] = 1;
-            rigid2d::Vector2D turtle_loc = rigid2d::Vector2D(Tmap_robot.getX(),Tmap_robot.getY());
-            filter.initialize_landmark(j,turtle_loc);
+            rigid2d::Vector2D landmark_loc = Tmap_robot(location);
+            filter.initialize_landmark(j,landmark_loc);
         }
 
         filter.update(z,j);
@@ -259,8 +260,7 @@ void sensorCallback(const visualization_msgs::MarkerArrayPtr &data)
     }
 
     // find transform from map to robot
-    rigid2d::Vector2D pos = rigid2d::Vector2D(filter.getState()(1,0),filter.getState()(2,0));
-    Tmap_robot = rigid2d::Transform2D(pos,0);
+    Tmap_robot = rigid2d::Transform2D(rigid2d::Vector2D(filter.getState()(1,0),filter.getState()(2,0)),filter.getState()(0,0));
 }
 
 /// \brief initializes node, subscriber, publisher, parameters, and objects
@@ -291,7 +291,7 @@ int main(int argc, char** argv)
     pub = nh.advertise<nav_msgs::Odometry>("odom", 10);
     path_odom_pub = nh.advertise<nav_msgs::Path>("odom_path", 10);
     path_slam_pub = nh.advertise<nav_msgs::Path>("slam_path", 10);
-    const ros::Subscriber fake_sensor_sub = nh.subscribe("sensed_landmarks", 10, sensorCallback);
+    const ros::Subscriber sensor_sub = nh.subscribe("sensed_landmarks", 10, sensorCallback);
 
 
     filter = nuslam::ekf(tube_coordinates_x.size()+5);
