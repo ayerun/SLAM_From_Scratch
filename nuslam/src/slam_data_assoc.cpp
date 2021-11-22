@@ -65,6 +65,12 @@ static std::vector<double> tube_coordinates_x;  //x coordinates of tube location
 static std::vector<double> tube_coordinates_y;  //y coordinates of tube locations
 static rigid2d::Transform2D Tmap_robot = rigid2d::Transform2D();
 
+template<class Matrix>
+void print_matrix(Matrix matrix) {
+    matrix.print(std::cout);
+}
+template void print_matrix<arma::mat>(arma::mat matrix);
+
 /// \brief subscriber callback that tracks odometry
 /// \param js_msg - current joint state
 void jsCallback(const sensor_msgs::JointStateConstPtr &js_msg)
@@ -145,6 +151,10 @@ void publishSlamPath()
     geometry_msgs::PoseStamped ps;
     std_msgs::Header head;
     tf2::Quaternion rot;
+
+    if (Tmap_robot.getX() == dd.getTransform().getX() && Tmap_robot.getY() == dd.getTransform().getY()) {
+        return;
+    }
 
     //header
     head.stamp = ros::Time::now();
@@ -241,7 +251,56 @@ void sensorCallback(const visualization_msgs::MarkerArrayPtr &data)
         rigid2d::Vector2D location = rigid2d::Vector2D(measurement.pose.position.x,measurement.pose.position.y);
         arma::mat z = nuslam::toPolar(location);
 
-        int j = filter.associateData(z)+1;
+        // int j = filter.associateData(z)+1;
+
+        int j=-3;
+        arma::mat temp(3+2*(filter.N+1),1);
+        double max_thresh = 65;
+        double min_thresh = 0.5;
+
+        if (filter.N == 0){
+            filter.N++;
+            j = 0;
+        }
+        if (j == -3) {
+            //copy state matrix to temp and add new measurement z
+            temp(arma::span(0,2+2*filter.N),0) = filter.getState()(arma::span(0,2+2*filter.N),0);
+            temp(3+2*filter.N) = temp(1) + z(0)*cos(z(1) + temp(0));
+            temp(4+2*filter.N) = temp(2) + z(0)*sin(z(1) + temp(0));
+
+            for (int k = 0; k<filter.N; k++){
+                arma::mat H = filter.calculateH(k+1,&temp);
+                arma::mat cov = H*filter.getSigma()*H.t() + filter.getR();
+                arma::mat zhat = filter.calculatezhat(k+1);
+
+                //compute error and wrap angle
+                arma::mat diff = z-zhat;
+                diff(1,0) = rigid2d::normalize_angle(diff(1,0));
+
+                arma::mat dkmat = (diff).t() * cov.i() * (diff);
+                double dk = dkmat(0);
+
+                if (dk < min_thresh){
+                    j = k;
+                    break;
+                } else if (dk < max_thresh && dk > min_thresh){
+                    j = -2;
+                    break;
+                }
+
+            }
+
+            if (j==-3) {
+                if (filter.N < filter.getN()) {
+                    j = filter.N;
+                    filter.N++;
+                }
+                else j = -2;
+            }
+        }
+
+        j++;
+
 
         // ignore false positives
         if (j<0 || j>filter.getN()) {
@@ -250,6 +309,7 @@ void sensorCallback(const visualization_msgs::MarkerArrayPtr &data)
         
         // initalize landmark
         if (hash.find(j) == hash.end()) {
+            std::cout << "Initialized Landmark " << j << std::endl; 
             hash[j] = 1;
             rigid2d::Vector2D landmark_loc = Tmap_robot(location);
             filter.initialize_landmark(j,landmark_loc);
@@ -261,6 +321,7 @@ void sensorCallback(const visualization_msgs::MarkerArrayPtr &data)
 
     // find transform from map to robot
     Tmap_robot = rigid2d::Transform2D(rigid2d::Vector2D(filter.getState()(1,0),filter.getState()(2,0)),filter.getState()(0,0));
+    publishSlamPath();
 }
 
 /// \brief initializes node, subscriber, publisher, parameters, and objects
@@ -273,8 +334,6 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "odometer");
     ros::NodeHandle nh;
 
-    bool data_association;
-
     //get parameters
     ros::param::get("/odom_frame_id", odom_frame_id);
     ros::param::get("/body_frame_id", body_frame_id);
@@ -284,7 +343,6 @@ int main(int argc, char** argv)
     ros::param::get("/wheel_radius", radius);
     ros::param::get("/tube_coordinates_x", tube_coordinates_x);
     ros::param::get("/tube_coordinates_y", tube_coordinates_y);
-    ros::param::get("/data_association",data_association);
 
     //initialize subscribers and publishers
     js_sub = nh.subscribe("joint_states", 10, jsCallback);
@@ -294,7 +352,7 @@ int main(int argc, char** argv)
     const ros::Subscriber sensor_sub = nh.subscribe("sensed_landmarks", 10, sensorCallback);
 
 
-    filter = nuslam::ekf(tube_coordinates_x.size()+5);
+    filter = nuslam::ekf(tube_coordinates_x.size());
 
     //initialize differential drive object
     dd = rigid2d::DiffDrive(base,radius);
@@ -322,7 +380,7 @@ int main(int argc, char** argv)
         ros::spinOnce();
         publishOdom();
         publishOdomPath();
-        publishSlamPath();
+        // publishSlamPath();
         broadcast();
         broadcast_map2odom();
         r.sleep();

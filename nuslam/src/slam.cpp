@@ -277,8 +277,6 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "odometer");
     ros::NodeHandle nh;
 
-    bool data_association;
-
     //get parameters
     ros::param::get("/odom_frame_id", odom_frame_id);
     ros::param::get("/body_frame_id", body_frame_id);
@@ -288,7 +286,6 @@ int main(int argc, char** argv)
     ros::param::get("/wheel_radius", radius);
     ros::param::get("/tube_coordinates_x", tube_coordinates_x);
     ros::param::get("/tube_coordinates_y", tube_coordinates_y);
-    ros::param::get("/data_association",data_association);
 
     //initialize subscribers and publishers
     js_sub = nh.subscribe("joint_states", 10, jsCallback);

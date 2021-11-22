@@ -42,7 +42,8 @@ namespace nuslam
 
         /// \brief calculates H matrix (derivative of relationship between system and measurement with respect to system)
         /// \param j - landmark id
-        arma::mat calculateH(int j);
+        // arma::mat calculateH(int j);
+        arma::mat calculateH(int j, arma::mat* stateptr=nullptr);
 
         /// \brief calculate range and bearing to landmark using odom state
         arma::mat calculatezhat(int j);
@@ -52,8 +53,6 @@ namespace nuslam
         void update(arma::mat z, int j);
 
         void initialize_landmark(int j, rigid2d::Vector2D location);
-
-        arma::mat calculateH2(int j, arma::mat temp);
 
         int associateData(arma::mat z);
 
@@ -76,6 +75,8 @@ namespace nuslam
         /// \brief accessor function
         /// \returns R
         arma::mat getR();
+
+        int N = 0;                  //number of observed landmarks
         
 
 
@@ -87,7 +88,6 @@ namespace nuslam
         arma::mat Q;                //process noise covariance matrix
         arma::mat Qbar;             //process noise for robot motion model, expanding to fill the whole state
         arma::mat R;                //sensor noise covariance matrix
-        int N = 0;                  //number of observed landmarks
     };
 
     /// \brief convert xy coordinates to range-bearing

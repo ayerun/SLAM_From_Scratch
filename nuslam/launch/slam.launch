@@ -7,7 +7,7 @@
     </group>
 
     <group unless="$(arg debug)">
-        <!-- <node name="teleop" pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" /> -->
+        <node name="teleop" pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" />
         <node name="slam" pkg="nuslam" type="nuslam_slam" output="screen"/>
     </group>
 

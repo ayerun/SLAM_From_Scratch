@@ -139,29 +139,22 @@ namespace nuslam
         state(2,0) = odom.getY();
     }
 
-    arma::mat ekf::calculateH(int j)
+    arma::mat ekf::calculateH(int j, arma::mat* stateptr)
     {
+        //assign cur_state
+        arma::mat cur_state;
+        if (stateptr == nullptr) cur_state = state;
+        else cur_state = *stateptr;
+
         //get landmark
-        rigid2d::Vector2D m = rigid2d::Vector2D(state(2*j+1,0),state(2*j+2,0));
+        rigid2d::Vector2D m = rigid2d::Vector2D(cur_state(2*j+1,0),cur_state(2*j+2,0));
 
         //get slam location
-        rigid2d::Vector2D point = rigid2d::Vector2D(state(1,0),state(2,0));
+        rigid2d::Vector2D point = rigid2d::Vector2D(cur_state(1,0),cur_state(2,0));
 
         rigid2d::Vector2D d = m-point;
         rigid2d::Vector2D d_norm = d.normalize();
         double d_mag = pow(d.x,2)+pow(d.y,2);
-
-        // arma::mat H = arma::mat(2,3+2*n,arma::fill::zeros);
-
-        // H(0,1) = -d.x/d_mag;
-        // H(0,2) = -d.y/d_mag;
-        // H(0,3+2*j) = d.x/d_mag;
-        // H(0,4+2*j) = d.y/d_mag;
-        // H(1,0) = -1;
-        // H(1,1) = d.y/pow(d_mag,2);
-        // H(1,2) = -d.x/pow(d_mag,2);
-        // H(1,3+2*j) = -d.y/pow(d_mag,2);
-        // H(1,4+2*j) = d.x/pow(d_mag,2);
 
         arma::mat A;
         arma::mat B;
@@ -232,60 +225,36 @@ namespace nuslam
         state(2*j+2,0) = location.y;
     }
 
-    arma::mat ekf::calculateH2(int j, arma::mat temp) {
-        rigid2d::Vector2D d;
-        arma::mat H;
-        if (j>=n) {
-            d.x = temp(1+2*j)-temp(1);
-            d.y = temp(2+2*j)-temp(2);
-
-            H = arma::mat(2,3+2*(n+1),arma::fill::zeros);
-        }
-        else {
-            d.x = state(1+2*j) - state(1);
-            d.y = state(2+2*j) - state(2);
-
-            H = arma::mat(2,3+2*n,arma::fill::zeros);
-        }
-
-        double d_mag = rigid2d::magnitude(d);
-
-        H(0,1) = -d.x/d_mag;
-        H(0,2) = -d.y/d_mag;
-        H(0,3+2*j) = d.x/d_mag;
-        H(0,4+2*j) = d.y/d_mag;
-        H(1,0) = -1;
-        H(1,1) = d.y/pow(d_mag,2);
-        H(1,2) = -d.x/pow(d_mag,2);
-        H(1,3+2*j) = -d.y/pow(d_mag,2);
-        H(1,4+2*j) = d.x/pow(d_mag,2);
-
-        return H;
-    }
-
     int ekf::associateData(arma::mat z) {
         arma::mat temp(3+2*(N+1),1);
-        double thresh = 65;
-        double limit = 0.01;
+        double max_thresh = 65;
+        double min_thresh = 0.01;
 
         if (N == 0){
-            return N++;
+            N++;
+            return 0;
         }
 
+        //copy state matrix to temp and add new measurement z
         temp(arma::span(0,2+2*N),0) = state(arma::span(0,2+2*N),0);
         temp(3+2*N) = temp(1) + z(0)*cos(z(1) + temp(0));
         temp(4+2*N) = temp(2) + z(0)*sin(z(1) + temp(0));
 
         for (int i = 0; i<N; i++){
-            arma::mat H = calculateH2(i,temp);
+            arma::mat H = calculateH(i+1,&temp);
             arma::mat cov = H*sigma*H.t() + R;
-            arma::mat zhat = calculatezhat(i);
-            arma::mat dkmat = (z-zhat).t() * cov.i() * (z-zhat);
+            arma::mat zhat = calculatezhat(i+1);
+
+            //compute error and wrap angle
+            arma::mat diff = z-zhat;
+            diff(1,0) = rigid2d::normalize_angle(diff(1,0));
+
+            arma::mat dkmat = (diff).t() * cov.i() * (diff);
             double dk = dkmat(0);
 
-            if (dk < thresh && dk < limit){
+            if (dk < min_thresh){
                 return i;
-            } else if (dk < thresh && dk > limit){
+            } else if (dk < max_thresh && dk > min_thresh){
                 return -2;
             }
 
