@@ -10,7 +10,7 @@
 
     <group unless="$(arg debug)">
         <node name="teleop" pkg="turtlebot3_teleop" type="turtlebot3_teleop_key" />
-        <node name="slam_data_assoc" pkg="nuslam" type="nuslam_slam_data_assoc" output="screen"/>
+        <node name="slam_data_assoc" pkg="nuslam" type="nuslam_slam_data_assoc" />
         <node name="landmarks" pkg="nuslam" type="nuslam_landmarks"/>
     </group>
     

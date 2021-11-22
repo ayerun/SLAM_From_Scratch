@@ -228,7 +228,7 @@ namespace nuslam
     int ekf::associateData(arma::mat z) {
         arma::mat temp(3+2*(N+1),1);
         double max_thresh = 65;
-        double min_thresh = 0.01;
+        double min_thresh = 0.5;
 
         if (N == 0){
             N++;
@@ -260,7 +260,10 @@ namespace nuslam
 
         }
 
-        if (N < n) return N++;
+        if (N < n) {
+            N++;
+            return N-1;
+        }
         else return -2;
     }
 

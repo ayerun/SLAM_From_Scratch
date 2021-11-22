@@ -252,6 +252,7 @@ void fakeSensorCallback(const visualization_msgs::MarkerArrayPtr &data)
             hash[j] = 1;
 
             //calculate landmark location in map coordinates
+            // Tmap_robot = rigid2d::Transform2D(rigid2d::Vector2D(filter.getState()(1,0),filter.getState()(2,0)),filter.getState()(0,0));
             rigid2d::Vector2D landmark_loc = Tmap_robot(location);
 
             //initialize landmark in state vector

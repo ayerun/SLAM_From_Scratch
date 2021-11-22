@@ -48,12 +48,20 @@ namespace nuslam
         /// \brief calculate range and bearing to landmark using odom state
         arma::mat calculatezhat(int j);
 
+        /// \brief update state estimate
         /// \param z - measurement
-        /// \param j = landmark id
+        /// \param j - landmark id
         void update(arma::mat z, int j);
 
+        /// \brief initializes new lanmark in state vector
+        /// \param j - index at which to initialize new landmark
+        /// \param location - location of new landmark in map frame
         void initialize_landmark(int j, rigid2d::Vector2D location);
 
+        /// \brief associate incoming measurement with initialized landmarks
+        /// \param z - range and bearing of sensed landmark in robot frame
+        /// \returns - index of state vector corresponding to associated landmark
+        ///             returns -2 if measurement does not correspond to any landmark
         int associateData(arma::mat z);
 
         /// \brief accessor function

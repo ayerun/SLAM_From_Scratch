@@ -17,8 +17,6 @@ namespace rigid2d
     /// \param d2 - a second number to compare
     /// \param epsilon - absolute threshold required for equality
     /// \return true if abs(d1 - d2) < epsilon
-    /// Note: the fabs function in <cmath> (c++ equivalent of math.h) will
-    /// be useful here
     constexpr bool almost_equal(double d1, double d2, double epsilon=1.0e-12)
     {
         if (fabs(d1-d2) < epsilon)
@@ -35,9 +33,6 @@ namespace rigid2d
     /// \brief convert degrees to radians
     /// \param deg - angle in degrees
     /// \returns radians
-    /// NOTE: implement this in the header file
-    /// constexpr means that the function can be computed at compile time
-    /// if given a compile-time constant as input
     constexpr double deg2rad(double deg)
     {
         return (deg*PI)/180;
@@ -52,9 +47,6 @@ namespace rigid2d
     }
 
     /// static_assertions test compile time assumptions.
-    /// You should write at least one more test for each function
-    /// You should also purposely (and temporarily) make one of these tests fail
-    /// just to see what happens
     static_assert(almost_equal(0, 0), "is_zero failed");
     static_assert(almost_equal(0.001, 0.005, 1.0e-2), "is_zero failed");
     static_assert(almost_equal(0, 3, 4), "is_zero failed");
@@ -111,13 +103,8 @@ namespace rigid2d
     std::ostream & operator<<(std::ostream & os, const Vector2D & v);
 
     /// \brief input a 2 dimensional vector
-    ///   You should be able to read vectors entered as two numbers
-    ///   separated by a newline or a space, or entered as [xcomponent, ycomponent]
     /// is - stream from which to read
     /// v [out] - output vector
-    /// Hint: The following may be useful:
-    /// https://en.cppreference.com/w/cpp/io/basic_istream/peek
-    /// https://en.cppreference.com/w/cpp/io/basic_istream/get
     std::istream & operator>>(std::istream & is, Vector2D & v);
 
     /// \brief scalar multiplication of vector
@@ -176,8 +163,6 @@ namespace rigid2d
     std::ostream & operator<<(std::ostream & os, const Twist2D & t);
 
     /// \brief input a 2 dimensional twist
-    ///   You should be able to read vectors entered as two numbers
-    ///   separated by a newline or a space, or entered as [xcomponent, ycomponent]
     /// is - stream from which to read
     /// t [out] - output twist
     std::istream & operator>>(std::istream & is, Twist2D & v);

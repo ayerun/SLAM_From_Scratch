@@ -65,11 +65,6 @@ static std::vector<double> tube_coordinates_x;  //x coordinates of tube location
 static std::vector<double> tube_coordinates_y;  //y coordinates of tube locations
 static rigid2d::Transform2D Tmap_robot = rigid2d::Transform2D();
 
-template<class Matrix>
-void print_matrix(Matrix matrix) {
-    matrix.print(std::cout);
-}
-template void print_matrix<arma::mat>(arma::mat matrix);
 
 /// \brief subscriber callback that tracks odometry
 /// \param js_msg - current joint state
@@ -233,8 +228,8 @@ void broadcast_map2odom()
     br2.sendTransform(trans2);
 }
 
-/// \brief implements slam using fake data with unknown data association
-/// \param data - fake data for slam
+/// \brief implements slam using fake lidar data with unknown data association
+/// \param data - sensed landmark locations
 void sensorCallback(const visualization_msgs::MarkerArrayPtr &data)
 {
     static std::unordered_map<int,int> hash;    //landmark initialization map
@@ -251,67 +246,23 @@ void sensorCallback(const visualization_msgs::MarkerArrayPtr &data)
         rigid2d::Vector2D location = rigid2d::Vector2D(measurement.pose.position.x,measurement.pose.position.y);
         arma::mat z = nuslam::toPolar(location);
 
-        // int j = filter.associateData(z)+1;
-
-        int j=-3;
-        arma::mat temp(3+2*(filter.N+1),1);
-        double max_thresh = 65;
-        double min_thresh = 0.5;
-
-        if (filter.N == 0){
-            filter.N++;
-            j = 0;
-        }
-        if (j == -3) {
-            //copy state matrix to temp and add new measurement z
-            temp(arma::span(0,2+2*filter.N),0) = filter.getState()(arma::span(0,2+2*filter.N),0);
-            temp(3+2*filter.N) = temp(1) + z(0)*cos(z(1) + temp(0));
-            temp(4+2*filter.N) = temp(2) + z(0)*sin(z(1) + temp(0));
-
-            for (int k = 0; k<filter.N; k++){
-                arma::mat H = filter.calculateH(k+1,&temp);
-                arma::mat cov = H*filter.getSigma()*H.t() + filter.getR();
-                arma::mat zhat = filter.calculatezhat(k+1);
-
-                //compute error and wrap angle
-                arma::mat diff = z-zhat;
-                diff(1,0) = rigid2d::normalize_angle(diff(1,0));
-
-                arma::mat dkmat = (diff).t() * cov.i() * (diff);
-                double dk = dkmat(0);
-
-                if (dk < min_thresh){
-                    j = k;
-                    break;
-                } else if (dk < max_thresh && dk > min_thresh){
-                    j = -2;
-                    break;
-                }
-
-            }
-
-            if (j==-3) {
-                if (filter.N < filter.getN()) {
-                    j = filter.N;
-                    filter.N++;
-                }
-                else j = -2;
-            }
-        }
-
-        j++;
-
+        // associate measurement with known landmarks
+        int j = filter.associateData(z)+1;
 
         // ignore false positives
         if (j<0 || j>filter.getN()) {
             continue;
         }
         
-        // initalize landmark
         if (hash.find(j) == hash.end()) {
+            //log initialization
             std::cout << "Initialized Landmark " << j << std::endl; 
             hash[j] = 1;
+
+            //Compute landmark location in map fram
             rigid2d::Vector2D landmark_loc = Tmap_robot(location);
+
+            //initialize landmark
             filter.initialize_landmark(j,landmark_loc);
         }
 
