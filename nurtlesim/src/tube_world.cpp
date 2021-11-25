@@ -596,13 +596,14 @@ int main(int argc, char** argv)
         if (i == frequency/10)
         {
             fakeSensor();   //publishes at 10hz
+            fakeLaser();
             i = 0;
         }
-        if (j == frequency*scan_time)
-        {
-            fakeLaser();   //publishes as 5hz
-            j = 0;
-        }
+        // if (j == frequency*scan_time)
+        // {
+        //     fakeLaser();   //publishes as 5hz
+        //     j = 0;
+        // }
 
         r.sleep();
     }

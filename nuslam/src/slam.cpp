@@ -61,7 +61,6 @@ static rigid2d::DiffDrive dd;                   //differential drive object
 static nuslam::ekf filter;                      //kalman filter
 static double base;                             //wheel separation
 static double radius;                           //wheel radius
-static const int frequency = 200;               //publishing frequency
 static std::vector<double> tube_coordinates_x;  //x coordinates of tube locations
 static std::vector<double> tube_coordinates_y;  //y coordinates of tube locations
 static rigid2d::Transform2D Tmap_robot = rigid2d::Transform2D();
@@ -369,7 +368,7 @@ int main(int argc, char** argv)
     state_landmarks_pub = nh.advertise<visualization_msgs::MarkerArray>("state_landmarks",10,true);
     const ros::Subscriber fake_sensor_sub = nh.subscribe("fake_sensor", 10, fakeSensorCallback);
 
-
+    //initialize kalman filter
     filter = nuslam::ekf(tube_coordinates_x.size());
 
     //initialize differential drive object

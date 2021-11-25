@@ -4,16 +4,18 @@ slip_min: 0
 slip_max: 2
 tube_radius: 0.0762
 tube_var: 0.005
-# tube_coordinates_x: [1,1,-1,-1,0.5,0,0,-0.8,0.25,-0.5]
-# tube_coordinates_y: [1,-1,1,-1,0,-0.8,0.7,0,0.25,-0.5]
-tube_coordinates_x: [1,1,-1,-1,0.3,0.45,-0.6,-0.8,0.250,0.5,-0.3,-0.5]
-tube_coordinates_y: [1,-1,1,-1,0.2,-0.8,-0.7,0.00,-0.25,0.5,0.30,0.10]
+tube_coordinates_x: [1,1,-1,-1,0.5,0,0,-0.8,0.25,-0.5]
+tube_coordinates_y: [1,-1,1,-1,0,-0.8,0.7,0,0.25,-0.5]
+# tube_coordinates_x: [1,1,-1,-1,0.3,0.45,-0.6,-0.8,0.250,0.5,-0.3,-0.5]
+# tube_coordinates_y: [1,-1,1,-1,0.2,-0.8,-0.7,0.00,-0.25,0.5,0.30,0.10]
+# tube_coordinates_x: [1,1,-1,-1,0.3,0.45,-0.6,-0.8,0.250,0.5,-0.3,-0.5,1,-1,0,0]
+# tube_coordinates_y: [1,-1,1,-1,0.2,-0.8,-0.7,0.00,-0.25,0.5,0.90,0.10,0,0,1,-1]
 max_distance: 0.8
 range_min: 0.12
-range_max: 0.7
+range_max: 0.8
 angle_increment: 0.0175
 resolution: 1
-laser_var: 0.00
+laser_var: 0.001
 num_samples: 360
-boarder_length: 3
-boarder_width: 3
+boarder_length: 2.5
+boarder_width: 2.5
