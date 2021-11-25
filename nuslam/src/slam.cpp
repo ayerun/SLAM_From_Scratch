@@ -45,6 +45,7 @@ static ros::Subscriber lidar_sub;
 static ros::Publisher pub;                      //odometry publisher
 static ros::Publisher path_odom_pub;            //path odometery publisher
 static ros::Publisher path_slam_pub;            //path slam publisher
+static ros::Publisher state_landmarks_pub;      //state estimated landmark locations
 static std::string odom_frame_id;               //odometry frame name
 static std::string body_frame_id;               //body frame name
 static std::string left_wheel_joint;            //left wheel joint name
@@ -65,25 +66,63 @@ static std::vector<double> tube_coordinates_x;  //x coordinates of tube location
 static std::vector<double> tube_coordinates_y;  //y coordinates of tube locations
 static rigid2d::Transform2D Tmap_robot = rigid2d::Transform2D();
 
-/// \brief subscriber callback that tracks odometry
-/// \param js_msg - current joint state
-void jsCallback(const sensor_msgs::JointStateConstPtr &js_msg)
-{
-    js_new = *js_msg;
 
-    //find change in wheel angles
-    angs.x = js_new.position[0]-js_old.position[0];
-    angs.y = js_new.position[1]-js_old.position[1];
+/// \brief publish SLAM state estimate landmark locations
+void publishStateLandmarks() {
 
-    //calculate twist from controls
-    controls.x = js_new.velocity[0];
-    controls.y = js_new.velocity[1];
-    Vb = dd.calculateTwist(controls);
+    arma::mat cur_state = filter.getState();
+    visualization_msgs::MarkerArray tubes;
+    double tube_radius;
+    ros::param::get("/tube_radius", tube_radius);
 
-    //update robot configuration
-    dd.updateConfiguration(angs);
+    //cylinder orientation
+    geometry_msgs::Quaternion rot;
+    rot.x = 0;
+    rot.y = 0;
+    rot.z = 0;
+    rot.w = 1;
 
-    js_old = js_new;
+    //marker color
+    std_msgs::ColorRGBA col;
+    col.r = 0;
+    col.g = 0;
+    col.b = 1;
+    col.a = 1;
+
+    //loop through all state an append marker messages to array
+    for(int i = 3; i<cur_state.size(); i=i+2)
+    {
+        //skip unintialized landmarks
+        if (cur_state[i] == 0 && cur_state[i+1]==0) continue;
+
+        visualization_msgs::Marker tube;
+        geometry_msgs::Point pos;
+        
+
+        //set shape and color
+        tube.type = tube.CYLINDER;
+        tube.color = col;
+
+        //set pose
+        pos.x = cur_state[i];
+        pos.y = cur_state[i+1];
+        pos.z = 0;
+        tube.pose.position = pos;
+        tube.pose.orientation = rot;
+
+        //set scale
+        tube.scale.x = tube_radius;
+        tube.scale.y = tube_radius;
+        tube.scale.z = 0.1;
+
+        tube.ns = "estimate";
+        tube.header.frame_id = "map";
+        tube.header.stamp = ros::Time::now();
+        tube.id = (i-3)/2;
+
+        tubes.markers.push_back(tube);
+    }
+    state_landmarks_pub.publish(tubes);
 }
 
 /// \brief oublish odometry
@@ -138,33 +177,6 @@ void publishOdomPath()
     path_odom_pub.publish(path);
 }
 
-// \brief publishes path messages of slam robot path
-void publishSlamPath()
-{
-    static nav_msgs::Path path;
-    geometry_msgs::PoseStamped ps;
-    std_msgs::Header head;
-    tf2::Quaternion rot;
-
-    //header
-    head.stamp = ros::Time::now();
-    head.frame_id = "world";
-    ps.header = head;
-    path.header = head;
-    
-    //position
-    ps.pose.position.x = Tmap_robot.getX();
-    ps.pose.position.y = Tmap_robot.getY();
-    ps.pose.position.z = 0;
-
-    //orientation
-    rot.setRPY(0,0,Tmap_robot.getTheta());
-    ps.pose.orientation = tf2::toMsg(rot);
-
-    path.poses.push_back(ps);
-    path_slam_pub.publish(path);
-}
-
 /// \brief broadcast transform from odom to base_footprint
 void broadcast()
 {
@@ -195,7 +207,7 @@ void broadcast()
 void broadcast_map2odom()
 {
     //calculate transform
-    rigid2d::Transform2D Todom_robot = rigid2d::Transform2D(rigid2d::Vector2D(dd.getTransform().getX(),dd.getTransform().getY()),dd.getTransform().getTheta());
+    rigid2d::Transform2D Todom_robot = dd.getTransform();
     rigid2d::Transform2D Tmap_odom = Tmap_robot*Todom_robot.inv();
 
     //initialize
@@ -221,6 +233,62 @@ void broadcast_map2odom()
 
     //broadcast
     br2.sendTransform(trans2);
+}
+
+/// \brief subscriber callback that tracks odometry
+/// \param js_msg - current joint state
+void jsCallback(const sensor_msgs::JointStateConstPtr &js_msg)
+{
+    js_new = *js_msg;
+
+    //find change in wheel angles
+    angs.x = js_new.position[0]-js_old.position[0];
+    angs.y = js_new.position[1]-js_old.position[1];
+
+    //calculate twist from controls
+    controls.x = js_new.velocity[0];
+    controls.y = js_new.velocity[1];
+    Vb = dd.calculateTwist(controls);
+
+    //update robot configuration
+    dd.updateConfiguration(angs);
+
+    //publish odometry
+    publishOdomPath();
+    publishOdom();
+
+    //broadcast transform
+    broadcast_map2odom();
+    broadcast();
+
+    js_old = js_new;
+}
+
+// \brief publishes path messages of slam robot path
+void publishSlamPath()
+{
+    static nav_msgs::Path path;
+    geometry_msgs::PoseStamped ps;
+    std_msgs::Header head;
+    tf2::Quaternion rot;
+
+    //header
+    head.stamp = ros::Time::now();
+    head.frame_id = "world";
+    ps.header = head;
+    path.header = head;
+    
+    //position
+    ps.pose.position.x = Tmap_robot.getX();
+    ps.pose.position.y = Tmap_robot.getY();
+    ps.pose.position.z = 0;
+
+    //orientation
+    rot.setRPY(0,0,Tmap_robot.getTheta());
+    ps.pose.orientation = tf2::toMsg(rot);
+
+    path.poses.push_back(ps);
+    path_slam_pub.publish(path);
 }
 
 /// \brief implements slam using fake data with known data association
@@ -252,7 +320,6 @@ void fakeSensorCallback(const visualization_msgs::MarkerArrayPtr &data)
             hash[j] = 1;
 
             //calculate landmark location in map coordinates
-            // Tmap_robot = rigid2d::Transform2D(rigid2d::Vector2D(filter.getState()(1,0),filter.getState()(2,0)),filter.getState()(0,0));
             rigid2d::Vector2D landmark_loc = Tmap_robot(location);
 
             //initialize landmark in state vector
@@ -263,9 +330,15 @@ void fakeSensorCallback(const visualization_msgs::MarkerArrayPtr &data)
         filter.update(z,j);
     }
 
-    // find transform from map to robot
+    //publish new state estimate landmark locations
+    publishStateLandmarks();
+
+    //find transform from map to robot
     rigid2d::Vector2D pos = rigid2d::Vector2D(filter.getState()(1,0),filter.getState()(2,0));
     Tmap_robot = rigid2d::Transform2D(pos,filter.getState()(0,0));
+
+    //publish slam state estimate
+    publishSlamPath();
 }
 
 /// \brief initializes node, subscriber, publisher, parameters, and objects
@@ -293,6 +366,7 @@ int main(int argc, char** argv)
     pub = nh.advertise<nav_msgs::Odometry>("odom", 10);
     path_odom_pub = nh.advertise<nav_msgs::Path>("odom_path", 10);
     path_slam_pub = nh.advertise<nav_msgs::Path>("slam_path", 10);
+    state_landmarks_pub = nh.advertise<visualization_msgs::MarkerArray>("state_landmarks",10,true);
     const ros::Subscriber fake_sensor_sub = nh.subscribe("fake_sensor", 10, fakeSensorCallback);
 
 
@@ -317,18 +391,7 @@ int main(int argc, char** argv)
     trans.header.frame_id = odom_frame_id;
     trans.child_frame_id = body_frame_id;
 
-    ros::Rate r(frequency); //looping rate
-
-    while(ros::ok())
-    {
-        ros::spinOnce();
-        publishOdom();
-        publishOdomPath();
-        publishSlamPath();
-        broadcast();
-        broadcast_map2odom();
-        r.sleep();
-    }
+    ros::spin();
 
     return 0;
 }

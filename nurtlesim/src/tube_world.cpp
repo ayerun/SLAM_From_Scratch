@@ -283,8 +283,8 @@ void fakeSensor()
 
     //marker color
     std_msgs::ColorRGBA col;
-    col.r = 1;
-    col.g = 0;
+    col.r = 0;
+    col.g = 1;
     col.b = 0;
     col.a = 1;
 

@@ -322,7 +322,7 @@ int main(int argc, char** argv) {
     ros::Rate r(frequency);
     while(ros::ok())
     {
-        ros::spinOnce();
+        ros::spin();
     }
     return 0;
 }
